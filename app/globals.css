@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --color-ink-950: #14120e;
+  --color-ink-900: #211e18;
+  --color-ink-700: #4a453b;
+  --color-ink-500: #7d766a;
+  --color-paper-50: #faf8f4;
+  --color-paper-100: #f3f0e9;
+  --color-paper-200: #e8e3d8;
+  --color-accent-600: #b45309;
+  --color-accent-500: #d97706;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  background: var(--color-paper-50);
+  color: var(--color-ink-950);
+  font-family: var(--font-sans);
+}
+
+.passage-text {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  line-height: 1.85;
+  white-space: pre-wrap;
+}
+
+/* Highlight colors keyed by annotation tag color token. */
+.hl-amber   { background: #fde68a; }
+.hl-sky     { background: #bae6fd; }
+.hl-violet  { background: #ddd6fe; }
+.hl-rose    { background: #fecdd3; }
+.hl-teal    { background: #99f6e4; }
+.hl-lime    { background: #d9f99d; }
+.hl-fuchsia { background: #f5d0fe; }
+.hl-orange  { background: #fed7aa; }
+.hl-slate   { background: #e2e8f0; }
+.hl-zinc    { background: #e4e4e7; }
+.hl-evidence-pick { outline: 2px solid var(--color-accent-600); outline-offset: 1px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
