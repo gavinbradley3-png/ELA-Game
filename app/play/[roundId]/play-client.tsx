@@ -103,7 +103,7 @@ export function PlayClient({ roundId }: { roundId: string }) {
 
       <header className="sticky top-0 z-40 border-b border-line-300 bg-paper-50/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 sm:px-6">
-          <span className="display hl-mark text-xl lowercase">Receipts</span>
+          <span className="display hl-mark text-xl">Receipts</span>
           <span className="accent-label hidden text-muted-500 sm:inline">Code {round.joinCode}</span>
           <span
             className="phase-pill phase-active rounded-full px-3 py-1 text-xs"

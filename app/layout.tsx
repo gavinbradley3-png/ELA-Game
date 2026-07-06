@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { League_Spartan, Inter, DM_Sans } from "next/font/google";
+import { League_Spartan, Inter, DM_Sans, Caveat } from "next/font/google";
 import "./globals.css";
 
 const spartan = League_Spartan({
@@ -23,6 +23,14 @@ const dmSans = DM_Sans({
   display: "swap",
 });
 
+// Handwritten script used only inside logo artwork ("Show your proof.")
+const caveat = Caveat({
+  weight: ["600", "700"],
+  subsets: ["latin"],
+  variable: "--font-script",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Receipts — Show Your Proof",
   description:
@@ -36,7 +44,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${spartan.variable} ${inter.variable} ${dmSans.variable}`}>
+    <html lang="en" className={`${spartan.variable} ${inter.variable} ${dmSans.variable} ${caveat.variable}`}>
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );
