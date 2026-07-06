@@ -14,27 +14,27 @@ export default async function PassagesPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="display text-5xl">Case files</h1>
-        <Link href="/teacher/passages/new" className="btn btn-gold px-4 py-2">
+        <h1 className="display text-5xl">Passages</h1>
+        <Link href="/teacher/passages/new" className="btn btn-primary px-4 py-2">
           + New passage
         </Link>
       </div>
       {list.length === 0 ? (
-        <p className="text-sm text-smoke-400">
+        <p className="text-sm text-muted-500">
           No passages yet. Add a short story excerpt, article, or poem — anything worth arguing about.
         </p>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
           {list.map((p) => (
             <li key={p.id}>
-              <Link href={`/teacher/passages/${p.id}`} className="card block p-4 transition hover:bg-night-800">
-                <div className="display text-2xl text-smoke-50">{p.title}</div>
-                <div className="mt-1 text-sm text-smoke-400">
+              <Link href={`/teacher/passages/${p.id}`} className="card block p-4 transition hover:bg-cream-200">
+                <div className="display text-2xl text-navy-950">{p.title}</div>
+                <div className="mt-1 text-sm text-muted-500">
                   {[p.genre, p.gradeLevel && `Grade ${p.gradeLevel}`, `${Math.max(1, Math.round(p.text.split(/\s+/).length / 200))} min read`]
                     .filter(Boolean)
                     .join(" · ")}
                 </div>
-                <p className="mt-2 line-clamp-2 text-sm text-smoke-300">{p.text}</p>
+                <p className="mt-2 line-clamp-2 text-sm text-ink-900/80">{p.text}</p>
               </Link>
             </li>
           ))}

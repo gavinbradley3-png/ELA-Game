@@ -26,16 +26,16 @@ export function Countdown({
   const urgent = totalSeconds <= 30 && totalSeconds > 0 && pausedRemainingMs == null;
   return (
     <span
-      className={`display inline-block rounded-lg border-2 px-3 py-0.5 text-3xl tabular-nums ${
+      className={`display inline-block rounded-lg border-2 px-2.5 py-1 text-2xl tabular-nums ${
         totalSeconds === 0
-          ? "border-alarm-500 bg-alarm-500/15 text-alarm-400"
+          ? "border-coral-500 bg-coral-100 text-coral-600"
           : urgent
-            ? "timer-urgent border-alarm-500 text-alarm-400"
-            : "border-night-600 bg-night-900 text-gold-400"
+            ? "timer-urgent border-coral-500 bg-paper-50 text-coral-600"
+            : "border-navy-950 bg-paper-50 text-navy-950"
       }`}
       aria-live={urgent ? "polite" : undefined}
     >
-      {totalSeconds === 0 ? "TIME!" : `${m}:${String(s).padStart(2, "0")}`}
+      {totalSeconds === 0 ? "Time" : `${m}:${String(s).padStart(2, "0")}`}
     </span>
   );
 }

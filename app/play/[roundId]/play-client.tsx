@@ -4,44 +4,45 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Countdown } from "@/components/Countdown";
 import { PassageView } from "@/components/PassageView";
-import { PhaseSplash, Confetti, EmojiRain, FloatingBits, HypeTicker, ScrollProgress } from "@/components/juice";
+import { PhaseSplash, Confetti, FloatingQuotes, HypeTicker, ScrollProgress } from "@/components/juice";
+import { Check } from "@/components/Logo";
 import type { PlayState } from "./types";
 import { AnnotateScreen, SubmitScreen } from "./work-screens";
 import { ReviewScreen, ReviseScreen, RevealScreen, ReflectScreen } from "./review-screens";
 
 const POLL_MS = 2000;
 
-const SPLASH: Record<string, { text: string; emoji: string }> = {
-  reading: { text: "Case file opened", emoji: "📂" },
-  annotating: { text: "Mark it up", emoji: "🖍️" },
-  prompt: { text: "The big question", emoji: "❓" },
-  submitting: { text: "Bring the receipts", emoji: "🧾" },
-  peer_review: { text: "Jury duty", emoji: "⚖️" },
-  revising: { text: "The appeal", emoji: "✏️" },
-  reveal: { text: "The verdict", emoji: "📣" },
-  reflection: { text: "Case notes", emoji: "📝" },
-  complete: { text: "Case closed", emoji: "✅" },
+const SPLASH: Record<string, { text: string; sub: string }> = {
+  reading: { text: "Reading", sub: "Every answer lives in the text" },
+  annotating: { text: "Annotate", sub: "Mark what matters" },
+  prompt: { text: "The Prompt", sub: "Think before you type" },
+  submitting: { text: "Submit Receipt", sub: "Show your proof" },
+  peer_review: { text: "Vote", sub: "Which receipt holds up?" },
+  revising: { text: "Revise", sub: "Second draft beats first draft" },
+  reveal: { text: "Reveal", sub: "How the class thought" },
+  reflection: { text: "Reflect", sub: "What changed in your thinking?" },
+  complete: { text: "Round Complete", sub: "Evidence. Claims. Proof." },
 };
 
 const PHASE_TITLES: Record<string, string> = {
-  lobby: "The Lobby",
-  reading: "Case File",
-  annotating: "Mark It Up",
-  prompt: "The Big Question",
-  submitting: "Bring the Receipts",
-  peer_review: "Jury Duty",
-  revising: "The Appeal",
-  reveal: "The Verdict",
-  reflection: "Case Notes",
-  complete: "Case Closed",
-  cancelled: "Case Dismissed",
+  lobby: "Lobby",
+  reading: "Reading",
+  annotating: "Annotate",
+  prompt: "The Prompt",
+  submitting: "Submit Receipt",
+  peer_review: "Vote",
+  revising: "Revise",
+  reveal: "Reveal",
+  reflection: "Reflect",
+  complete: "Done",
+  cancelled: "Ended",
 };
 
 export function PlayClient({ roundId }: { roundId: string }) {
   const [state, setState] = useState<PlayState | null>(null);
   const [gone, setGone] = useState(false);
   const [offline, setOffline] = useState(false);
-  const [splash, setSplash] = useState<{ text: string; emoji: string; key: string } | null>(null);
+  const [splash, setSplash] = useState<{ text: string; sub: string; key: string } | null>(null);
   const prevPhase = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -75,9 +76,9 @@ export function PlayClient({ roundId }: { roundId: string }) {
     return (
       <Shell>
         <div className="mx-auto max-w-md pt-16 text-center">
-          <span className="stamp mb-6 inline-block text-3xl text-alarm-400">Off the case</span>
-          <p className="mb-8 text-smoke-300">You may have been removed, or your session expired.</p>
-          <Link href="/play" className="btn btn-gold display px-8 py-3 text-3xl">
+          <h1 className="display mb-3 text-4xl">You&apos;re not in this round</h1>
+          <p className="mb-8 text-muted-500">You may have been removed, or your session expired.</p>
+          <Link href="/play" className="btn btn-primary display px-8 py-3 text-2xl">
             Rejoin
           </Link>
         </div>
@@ -87,7 +88,7 @@ export function PlayClient({ roundId }: { roundId: string }) {
   if (!state) {
     return (
       <Shell>
-        <p className="pt-24 text-center text-smoke-400">Connecting to your class…</p>
+        <p className="pt-24 text-center text-muted-500">Connecting to your class…</p>
       </Shell>
     );
   }
@@ -97,26 +98,27 @@ export function PlayClient({ roundId }: { roundId: string }) {
 
   return (
     <Shell>
-      {splash && <PhaseSplash text={splash.text} emoji={splash.emoji} splashKey={splash.key} />}
+      {splash && <PhaseSplash text={splash.text} sub={splash.sub} splashKey={splash.key} />}
       {phase === "reveal" && <Confetti />}
 
-      <header className="sticky top-0 z-40 border-b border-night-700 bg-night-950/90 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-line-300 bg-paper-50/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 sm:px-6">
-          <span className="display text-2xl text-gold-400">Receipts</span>
-          <span className="hidden text-xs font-bold uppercase tracking-wider text-smoke-400 sm:inline">
-            Case #{round.joinCode}
-          </span>
-          <span className="stamp -rotate-1 border-2 px-2 py-0 text-sm text-smoke-50" data-testid="student-phase">
+          <span className="display hl-mark text-xl lowercase">Receipts</span>
+          <span className="accent-label hidden text-muted-500 sm:inline">Code {round.joinCode}</span>
+          <span
+            className="phase-pill phase-active rounded-full px-3 py-1 text-xs"
+            data-testid="student-phase"
+          >
             {PHASE_TITLES[phase] ?? phase}
           </span>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2.5">
             {offline && (
-              <span className="rounded-lg bg-alarm-500/15 px-2 py-1 text-xs font-bold text-alarm-400">
+              <span className="rounded-lg bg-coral-100 px-2 py-1 text-xs font-bold text-coral-600">
                 Reconnecting…
               </span>
             )}
-            <span className="hidden text-sm text-smoke-400 sm:inline">
-              🕵️ <span className="font-bold text-smoke-50">{state.me.name}</span>
+            <span className="hidden text-sm text-muted-500 sm:inline">
+              <span className="font-bold text-ink-900">{state.me.name}</span>
             </span>
             <Countdown endsAt={round.phaseEndsAt} pausedRemainingMs={round.paused ? round.pausedRemainingMs : null} />
           </div>
@@ -125,12 +127,9 @@ export function PlayClient({ roundId }: { roundId: string }) {
 
       <div className="mx-auto w-full max-w-6xl grow px-4 py-6 sm:px-6">
         {round.paused && (
-          <div className="pop mx-auto mb-6 max-w-3xl">
-            <div className="tape h-3 w-full rounded-t-xl" />
-            <div className="border-x-2 border-b-2 border-gold-400 bg-night-900 p-4 text-center">
-              <span className="display text-4xl text-gold-400">⏸ Paused</span>
-              <p className="mt-1 text-sm text-smoke-300">Eyes on your teacher. Your work is saved.</p>
-            </div>
+          <div className="pop mx-auto mb-6 max-w-3xl rounded-xl border-2 border-navy-950 bg-paper-50 p-4 text-center">
+            <span className="display text-3xl">Paused</span>
+            <p className="mt-1 text-sm text-muted-500">Eyes on your teacher. Your work is saved.</p>
           </div>
         )}
         <div className={round.paused ? "pointer-events-none opacity-50" : ""}>
@@ -169,7 +168,7 @@ function PhaseBody({ state, refresh }: { state: PlayState; refresh: () => Promis
       return <CompleteScreen state={state} />;
     case "cancelled":
       return (
-        <p className="mx-auto max-w-md pt-16 text-center text-lg text-smoke-300">
+        <p className="mx-auto max-w-md pt-16 text-center text-lg text-muted-500">
           This round was ended by your teacher.
         </p>
       );
@@ -178,52 +177,50 @@ function PhaseBody({ state, refresh }: { state: PlayState; refresh: () => Promis
   }
 }
 
-const HYPE_LINES = [
-  "Lock in. 🔒",
-  "Reading is the meta. 📖",
-  "No random quotes. We keep receipts. 🧾",
-  "Cook with evidence, not vibes. 🍳",
-  "Snipers > sprayers. 🎯",
-  "It's giving… textual evidence. ✨",
-  "Your claim needs a lawyer. Be the lawyer. ⚖️",
-  "Skimming is a crime in this jurisdiction. 🚔",
-  "Second drafts are a glow-up, not an L. 💅",
-  "Receipts or it didn't happen. 🫡",
+const TICKER_LINES = [
+  "Show your proof.",
+  "Back it up.",
+  "Strong claims need anchors.",
+  "Quote the text, then prove why it matters.",
+  "Weak evidence gets exposed in the vote.",
+  "Read like the answer is hiding — because it is.",
+  "A receipt is a quote plus the reasoning that makes it stick.",
 ];
 
 function LobbyScreen({ state }: { state: PlayState }) {
   return (
     <div className="relative mx-auto max-w-md pt-4 text-center">
-      <FloatingBits emojis={["🧾", "🔍", "⚖️", "📂", "✨", "🖍️"]} />
-      <div className="bounce-soft mb-2 text-7xl">🕵️</div>
-      <h1 className="display mb-1 text-6xl">You&apos;re on the case,</h1>
-      <h2 className="display mb-4 text-6xl text-gold-400">{state.me.name}!</h2>
-
-      <div className="mb-4 min-h-6">
-        <HypeTicker lines={HYPE_LINES} />
+      <FloatingQuotes />
+      <h1 className="display mb-1 text-6xl">
+        You&apos;re in, <span className="hl-mark">{state.me.name}</span>.
+      </h1>
+      <div className="mb-4 mt-3 min-h-6">
+        <HypeTicker lines={TICKER_LINES} />
       </div>
 
       <div className="card rise mb-4 p-4">
-        <div key={state.pulse.joined} className="display pop text-5xl text-gold-400">
+        <div key={state.pulse.joined} className="display pop text-5xl text-teal-600">
           {state.pulse.joined}
         </div>
-        <div className="text-xs font-bold uppercase tracking-widest text-smoke-400">
-          detective{state.pulse.joined === 1 ? "" : "s"} in the room
+        <div className="accent-label text-muted-500">
+          student{state.pulse.joined === 1 ? "" : "s"} in the room
         </div>
       </div>
 
-      <div className="card rise p-5 text-left text-sm text-smoke-300">
-        <h3 className="display mb-3 text-2xl text-smoke-50">How to win the room</h3>
-        <ol className="space-y-2">
-          <Step n={1} title="Read the case file">Every answer lives in the text.</Step>
-          <Step n={2} title="Mark it up">Highlight what matters — snipers beat sprayers.</Step>
-          <Step n={3} title="Bring the receipt">Claim + exact quote + why it proves you right.</Step>
-          <Step n={4} title="Jury duty">Judge two anonymous responses. Thinking, not friends.</Step>
-          <Step n={5} title="The appeal">Give it a glow-up — or stand on business and defend it.</Step>
+      <div className="paper receipt-jagged rise p-6 text-left text-sm">
+        <h3 className="display mb-3 text-2xl">How a round works</h3>
+        <ol className="space-y-2 text-ink-900/85">
+          <Step n={1} title="Read">Every answer lives in the text.</Step>
+          <Step n={2} title="Annotate">Mark what matters. Fewer, sharper highlights win.</Step>
+          <Step n={3} title="Submit your receipt">A claim, an exact quote, and reasoning that makes it stick.</Step>
+          <Step n={4} title="Vote">Judge two anonymous receipts. Evidence, not friendship.</Step>
+          <Step n={5} title="Revise">Strengthen your answer — or defend it with a reason.</Step>
         </ol>
-        <p className="mt-4 text-center font-bold text-gold-400">Random quotes don&apos;t win. Receipts do.</p>
+        <p className="mt-4 text-center font-bold text-navy-950">
+          No opinions without <span className="hl-mark">proof</span>.
+        </p>
       </div>
-      <p className="mt-4 animate-pulse text-sm text-smoke-400">Waiting for your teacher to open the case…</p>
+      <p className="mt-4 animate-pulse text-sm text-muted-500">Waiting for your teacher to start…</p>
     </div>
   );
 }
@@ -231,11 +228,11 @@ function LobbyScreen({ state }: { state: PlayState }) {
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <li className="flex gap-3">
-      <span className="display mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gold-400 text-base text-night-950">
+      <span className="display mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-navy-950 text-sm text-paper-50">
         {n}
       </span>
       <span>
-        <span className="font-bold text-smoke-50">{title}.</span> {children}
+        <span className="font-bold text-navy-950">{title}.</span> {children}
       </span>
     </li>
   );
@@ -246,15 +243,12 @@ function ReadingScreen({ state }: { state: PlayState }) {
   return (
     <div className="mx-auto max-w-3xl">
       <ScrollProgress />
-      <CaseFileHeader
+      <CaseHeader
         title={state.passage.title}
-        subtitle="Read the WHOLE thing — skimming is a crime in this jurisdiction. 🚔 You'll annotate next, so notice moments that feel important."
+        subtitle="Read the whole thing — the teal bar up top tracks your progress. You'll annotate next, so notice moments that feel important."
       />
       <PassageView text={state.passage.text} />
       <VocabNotes notes={state.passage.vocabNotes} />
-      <p className="mt-4 text-center text-xs font-bold uppercase tracking-widest text-smoke-400">
-        Fill the gold bar at the top. Then you&apos;re certified. ✅
-      </p>
     </div>
   );
 }
@@ -262,14 +256,12 @@ function ReadingScreen({ state }: { state: PlayState }) {
 function PromptScreen({ state }: { state: PlayState }) {
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="pop relative mb-6 rounded-2xl border-4 border-gold-400 bg-night-900 p-6 sm:p-8">
-        <span className="stamp absolute -top-4 left-4 bg-night-900 text-sm text-alarm-400">
-          {state.prompt?.promptType}
-        </span>
-        <p className="display mb-3 text-4xl leading-tight text-smoke-50 sm:text-5xl">{state.prompt?.text}</p>
-        <p className="text-sm text-smoke-400">
-          Think before you type. Which exact words in the text are your strongest receipt? 🤔
-          Submissions open when your teacher says go — lock in.
+      <div className="paper receipt-jagged pop relative mb-6 p-6 sm:p-8">
+        <span className="accent-label text-coral-600">{state.prompt?.promptType}</span>
+        <p className="display mt-2 text-4xl leading-tight sm:text-5xl">{state.prompt?.text}</p>
+        <p className="mt-3 text-sm text-muted-500">
+          Think before you type: which exact words in the text are your strongest proof? Submissions
+          open when your teacher says go.
         </p>
       </div>
       {state.passage && <PassageView text={state.passage.text} highlights={state.annotations} />}
@@ -280,26 +272,28 @@ function PromptScreen({ state }: { state: PlayState }) {
 function CompleteScreen({ state }: { state: PlayState }) {
   return (
     <div className="mx-auto max-w-3xl">
-      <EmojiRain emojis={["🧾", "⭐", "🔍", "💯", "⚖️"]} />
       <div className="mb-8 pt-4 text-center">
-        <span className="stamp pop inline-block border-8 px-6 py-2 text-6xl text-win-400">Case closed</span>
-        <p className="mt-4 text-smoke-300">
-          W performance, {state.me.name}. 🫡 Your thinking is saved for your teacher.
+        <div className="mb-3 flex justify-center"><Check className="h-14 w-14" /></div>
+        <h1 className="display text-5xl">
+          Round <span className="hl-mark">complete</span>.
+        </h1>
+        <p className="mt-3 text-muted-500">
+          Strong work, {state.me.name}. Your thinking is saved for your teacher.
         </p>
       </div>
-      {state.reveal && <RevealScreen state={state} noConfetti />}
+      {state.reveal && <RevealScreen state={state} />}
     </div>
   );
 }
 
-export function CaseFileHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+export function CaseHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-4">
-      <div className="mb-2 flex items-center gap-3">
-        <span className="stamp text-xs text-alarm-400">Case file</span>
+      <div className="flex items-baseline gap-3">
+        <span aria-hidden className="font-serif text-4xl font-bold leading-none text-teal-500">&ldquo;</span>
         <h1 className="display text-4xl">{title}</h1>
       </div>
-      {subtitle && <p className="text-sm text-smoke-400">{subtitle}</p>}
+      {subtitle && <p className="mt-1 text-sm text-muted-500">{subtitle}</p>}
     </div>
   );
 }
@@ -308,8 +302,8 @@ export function VocabNotes({ notes }: { notes: string | null | undefined }) {
   if (!notes) return null;
   return (
     <details className="card mt-4 p-4">
-      <summary className="cursor-pointer text-sm font-bold text-gold-400">📖 Vocabulary help</summary>
-      <p className="mt-2 whitespace-pre-wrap text-sm text-smoke-300">{notes}</p>
+      <summary className="cursor-pointer text-sm font-bold text-teal-600">Vocabulary help</summary>
+      <p className="mt-2 whitespace-pre-wrap text-sm text-ink-900/85">{notes}</p>
     </details>
   );
 }

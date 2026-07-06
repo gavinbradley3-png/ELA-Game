@@ -29,25 +29,25 @@ export default async function PassageDetailPage({
     <div className="max-w-3xl">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="display text-5xl">{passage.title}</h1>
-        <Link href={`/teacher/rounds/new?passageId=${passage.id}`} className="btn btn-gold px-4 py-2">
-          🧾 Launch a round with this passage
+        <Link href={`/teacher/rounds/new?passageId=${passage.id}`} className="btn btn-primary px-4 py-2">
+          Launch a round with this passage
         </Link>
       </div>
 
       {error && (
-        <p className="mb-4 rounded-xl border-2 border-alarm-500 bg-alarm-500/10 px-4 py-3 text-sm font-semibold text-alarm-400">
+        <p className="mb-4 rounded-xl border-2 border-coral-500 bg-coral-100 px-4 py-3 text-sm font-semibold text-coral-600">
           {error}
         </p>
       )}
       {saved && (
-        <p className="mb-4 rounded-xl border-2 border-win-400 bg-win-400/10 px-4 py-3 text-sm font-semibold text-win-400">
+        <p className="mb-4 rounded-xl border-2 border-teal-500 bg-teal-100 px-4 py-3 text-sm font-semibold text-teal-600">
           Saved.
         </p>
       )}
 
       <section className="card mb-10 p-5">
         <h2 className="display mb-3 text-3xl">Challenge prompts</h2>
-        <p className="mb-4 text-sm text-smoke-400">
+        <p className="mb-4 text-sm text-muted-500">
           A strong prompt is arguable, answerable from this text alone, and requires evidence.
           Weak: &ldquo;Did you like the story?&rdquo; Strong: &ldquo;What best explains Lena&apos;s behavior —
           anger, guilt, or fear? Choose the strongest evidence and explain how it supports your claim.&rdquo;
@@ -55,10 +55,10 @@ export default async function PassageDetailPage({
         {promptList.length > 0 && (
           <ul className="mb-5 space-y-2">
             {promptList.map((p) => (
-              <li key={p.id} className="flex items-start justify-between gap-3 rounded-xl border border-night-700 bg-night-950 px-4 py-3">
+              <li key={p.id} className="flex items-start justify-between gap-3 rounded-xl border border-line-300 bg-cream-100 px-4 py-3">
                 <div>
-                  <div className="text-sm font-semibold text-smoke-50">{p.text}</div>
-                  <div className="mt-1 text-xs text-smoke-400">
+                  <div className="text-sm font-semibold text-navy-950">{p.text}</div>
+                  <div className="mt-1 text-xs text-muted-500">
                     {p.promptType}
                     {p.focusSkill ? ` · Focus: ${p.focusSkill}` : ""}
                   </div>
@@ -66,7 +66,7 @@ export default async function PassageDetailPage({
                 <form action={deletePrompt}>
                   <input type="hidden" name="id" value={p.id} />
                   <input type="hidden" name="passageId" value={passage.id} />
-                  <button type="submit" className="text-xs text-smoke-400 underline hover:text-alarm-400">
+                  <button type="submit" className="text-xs text-muted-500 underline hover:text-coral-600">
                     Delete
                   </button>
                 </form>
@@ -77,7 +77,7 @@ export default async function PassageDetailPage({
         <form action={createPrompt} className="flex flex-col gap-3">
           <input type="hidden" name="passageId" value={passage.id} />
           <label className="flex flex-col gap-1.5">
-            <span className="text-xs font-bold uppercase tracking-wider text-smoke-400">Prompt text</span>
+            <span className="accent-label text-muted-500">Prompt text</span>
             <textarea
               name="text"
               required
@@ -88,7 +88,7 @@ export default async function PassageDetailPage({
           </label>
           <div className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-smoke-400">Type</span>
+              <span className="accent-label text-muted-500">Type</span>
               <select name="promptType" className="field w-auto">
                 {PROMPT_TYPES.map((t) => (
                   <option key={t} value={t}>{t}</option>
@@ -96,10 +96,10 @@ export default async function PassageDetailPage({
               </select>
             </label>
             <label className="flex grow flex-col gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-smoke-400">Focus skill (optional)</span>
+              <span className="accent-label text-muted-500">Focus skill (optional)</span>
               <input name="focusSkill" placeholder="Character motivation" className="field" />
             </label>
-            <button type="submit" className="btn btn-gold px-4 py-2">
+            <button type="submit" className="btn btn-primary px-4 py-2">
               Add prompt
             </button>
           </div>
@@ -112,14 +112,14 @@ export default async function PassageDetailPage({
           <input type="hidden" name="id" value={passage.id} />
           <PassageFormFields passage={passage} />
           <div className="flex items-center gap-4">
-            <button type="submit" className="btn btn-gold px-5 py-2.5">
+            <button type="submit" className="btn btn-primary px-5 py-2.5">
               Save changes
             </button>
           </div>
         </form>
-        <form action={archivePassage} className="mt-4 border-t border-night-700 pt-4">
+        <form action={archivePassage} className="mt-4 border-t border-line-300 pt-4">
           <input type="hidden" name="id" value={passage.id} />
-          <button type="submit" className="text-sm text-smoke-400 underline hover:text-alarm-400">
+          <button type="submit" className="text-sm text-muted-500 underline hover:text-coral-600">
             Archive this passage
           </button>
         </form>

@@ -1,18 +1,32 @@
 import type { Metadata, Viewport } from "next";
-import { Bebas_Neue } from "next/font/google";
+import { League_Spartan, Inter, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const headline = Bebas_Neue({
-  weight: "400",
+const spartan = League_Spartan({
+  weight: ["600", "700", "800", "900"],
   subsets: ["latin"],
   variable: "--font-headline",
   display: "swap",
 });
 
+const inter = Inter({
+  weight: ["400", "500", "600", "700", "800"],
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+  variable: "--font-accent",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Receipts — Bring the Evidence",
+  title: "Receipts — Show Your Proof",
   description:
-    "The live classroom evidence battle. Students read, annotate, make claims, bring the receipts, judge the jury round, and revise — teacher runs the room.",
+    "The live classroom ELA game where claims need evidence. Students read, annotate, submit receipts, vote, revise, and defend their thinking — the teacher runs the room.",
 };
 
 export const viewport: Viewport = {
@@ -22,7 +36,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={headline.variable}>
+    <html lang="en" className={`${spartan.variable} ${inter.variable} ${dmSans.variable}`}>
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );

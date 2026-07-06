@@ -31,7 +31,7 @@ export function RoundSetupForm({ action, classes, passages, prompts, initialPass
   return (
     <form action={action} className="flex flex-col gap-5">
       <label className="flex flex-col gap-1.5">
-        <span className="text-xs font-bold uppercase tracking-wider text-smoke-400">Class</span>
+        <span className="accent-label text-muted-500">Class</span>
         <select name="classId" className="field">
           {classes.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
@@ -40,7 +40,7 @@ export function RoundSetupForm({ action, classes, passages, prompts, initialPass
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-xs font-bold uppercase tracking-wider text-smoke-400">Passage</span>
+        <span className="accent-label text-muted-500">Passage</span>
         <select name="passageId" value={passageId} onChange={(e) => setPassageId(e.target.value)} className="field">
           {passages.map((p) => (
             <option key={p.id} value={p.id}>{p.title}</option>
@@ -49,9 +49,9 @@ export function RoundSetupForm({ action, classes, passages, prompts, initialPass
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-xs font-bold uppercase tracking-wider text-smoke-400">Challenge prompt</span>
+        <span className="accent-label text-muted-500">Challenge prompt</span>
         {passagePrompts.length === 0 ? (
-          <span className="rounded-xl border-2 border-gold-400 bg-gold-400/10 px-3 py-2 text-sm text-smoke-300">
+          <span className="rounded-xl border-2 border-mark-400 bg-mark-300/40 px-3 py-2 text-sm text-ink-900/80">
             This passage has no prompts yet — add one from the passage page.
           </span>
         ) : (
@@ -70,19 +70,19 @@ export function RoundSetupForm({ action, classes, passages, prompts, initialPass
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {TIMERS.map((t) => (
             <label key={t.name} className="flex flex-col gap-1">
-              <span className="text-xs text-smoke-400">{t.label}</span>
+              <span className="text-xs text-muted-500">{t.label}</span>
               <input name={t.name} type="number" min={1} max={30} defaultValue={t.def} className="field px-2 py-1.5" />
             </label>
           ))}
         </div>
       </fieldset>
 
-      <label className="flex items-center gap-2 text-sm text-smoke-300">
-        <input type="checkbox" name="namesHidden" defaultChecked className="h-4 w-4 accent-gold-400" />
+      <label className="flex items-center gap-2 text-sm text-ink-900/80">
+        <input type="checkbox" name="namesHidden" defaultChecked className="h-4 w-4 accent-teal-500" />
         Hide student names on reveal and projection (recommended — you can toggle live)
       </label>
 
-      <button type="submit" disabled={passagePrompts.length === 0} className="btn btn-gold display self-start px-8 py-3 text-3xl">
+      <button type="submit" disabled={passagePrompts.length === 0} className="btn btn-primary display self-start px-8 py-3 text-3xl">
         Open the lobby →
       </button>
     </form>
