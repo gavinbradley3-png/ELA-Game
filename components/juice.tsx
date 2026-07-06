@@ -38,21 +38,31 @@ export function PhaseSplash({
 
 const CONFETTI_COLORS = ["#ffe44d", "#14b8a6", "#ff6b4a", "#0f1d2d", "#fffdf6"];
 
-/** Brand-colored confetti (hidden automatically under prefers-reduced-motion). */
-export function Confetti({ count = 80 }: { count?: number }) {
+/**
+ * One-shot brand-colored confetti burst. Fires once on mount, then unmounts so
+ * it never sits on top of the reveal content while the class is discussing.
+ * (Hidden entirely under prefers-reduced-motion.)
+ */
+export function Confetti({ count = 90 }: { count?: number }) {
+  const [done, setDone] = useState(false);
   const pieces = useMemo(
     () =>
       Array.from({ length: count }, (_, i) => ({
         left: Math.random() * 100,
-        delay: Math.random() * 1.2,
-        duration: 2.2 + Math.random() * 2,
+        delay: Math.random() * 0.5,
+        duration: 2 + Math.random() * 1.6,
         color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
         tilt: Math.random() * 360,
       })),
     [count],
   );
+  useEffect(() => {
+    const t = setTimeout(() => setDone(true), 4200);
+    return () => clearTimeout(t);
+  }, []);
+  if (done) return null;
   return (
-    <>
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-30 overflow-hidden">
       {pieces.map((p, i) => (
         <span
           key={i}
@@ -66,7 +76,7 @@ export function Confetti({ count = 80 }: { count?: number }) {
           }}
         />
       ))}
-    </>
+    </div>
   );
 }
 

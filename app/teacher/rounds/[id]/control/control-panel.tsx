@@ -229,7 +229,7 @@ function StudentsPanel({ status, act }: { status: TeacherStatus; act: (b: Record
             <li key={s.id} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm ${s.status === "removed" ? "opacity-40" : ""}`}>
               <span className="font-bold text-navy-950">{s.displayName}</span>
               <span className="flex gap-1 text-xs">
-                {s.annotationCount > 0 && <Chip>{s.annotationCount} notes</Chip>}
+                {s.annotationCount > 0 && <Chip>{s.annotationCount} note{s.annotationCount === 1 ? "" : "s"}</Chip>}
                 {s.hasSubmitted && <Chip tone="good">submitted</Chip>}
                 {s.reviewsAssigned > 0 && (
                   <Chip tone={s.reviewsDone === s.reviewsAssigned ? "good" : "neutral"}>

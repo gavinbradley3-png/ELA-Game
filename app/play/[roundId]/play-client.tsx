@@ -4,13 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Countdown } from "@/components/Countdown";
 import { PassageView } from "@/components/PassageView";
-import { PhaseSplash, Confetti, FloatingQuotes, HypeTicker, ScrollProgress } from "@/components/juice";
+import { PhaseSplash, Confetti, HypeTicker, ScrollProgress } from "@/components/juice";
 import { Check } from "@/components/Logo";
 import type { PlayState } from "./types";
 import { AnnotateScreen, SubmitScreen } from "./work-screens";
 import { ReviewScreen, ReviseScreen, RevealScreen, ReflectScreen } from "./review-screens";
 
-const POLL_MS = 2000;
+const POLL_MS = 1200;
 
 const SPLASH: Record<string, { text: string; sub: string }> = {
   reading: { text: "Reading", sub: "Every answer lives in the text" },
@@ -202,8 +202,7 @@ const TICKER_LINES = [
 
 function LobbyScreen({ state }: { state: PlayState }) {
   return (
-    <div className="relative mx-auto max-w-md pt-4 text-center">
-      <FloatingQuotes />
+    <div className="mx-auto max-w-md pt-4 text-center">
       <h1 className="display mb-1 text-6xl">
         You&apos;re in, <span className="hl-mark">{state.me.name}</span>.
       </h1>

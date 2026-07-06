@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PassageView } from "@/components/PassageView";
 import { ClassMeter, CountUp, PhaseSplash } from "@/components/juice";
 import { Check } from "@/components/Logo";
@@ -224,6 +224,17 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
   const [savedKey, setSavedKey] = useState(0);
   const [lastSaveKept, setLastSaveKept] = useState(false);
 
+  // On phones the revision form sits below the passage — bring it into view
+  // when the student picks a new quote.
+  const reviseFormRef = useRef<HTMLDivElement>(null);
+  const hadEvidence = useRef(true);
+  useEffect(() => {
+    if (mode === "revise" && evidence && !hadEvidence.current && window.matchMedia("(max-width: 1023px)").matches) {
+      reviseFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    hadEvidence.current = !!evidence;
+  }, [evidence, mode]);
+
   if (!sub) {
     return (
       <p className="mx-auto max-w-md pt-12 text-center text-muted-500">
@@ -349,7 +360,7 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
               onSelectRange={(start, end, text) => setEvidence({ start, end, text })}
             />
           </div>
-          <div className="lg:sticky lg:top-16 lg:self-start">
+          <div ref={reviseFormRef} className="scroll-mt-16 lg:sticky lg:top-16 lg:self-start">
             <div className="paper receipt-jagged p-6">
               <h2 className="display mb-3 text-2xl">Your revision</h2>
               {evidence && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PassageView } from "@/components/PassageView";
 import { ClassMeter, FlyToast, PhaseSplash } from "@/components/juice";
 import { ANNOTATION_TAGS, TAG_BY_ID } from "@/lib/tags";
@@ -198,8 +198,23 @@ export function SubmitScreen({ state, refresh }: { state: PlayState; refresh: ()
   const status = reasoningStatus(reasoning.length);
   const pct = Math.min(100, Math.round((reasoning.length / LIMITS.reasoning.min) * 100));
 
+  // On phones the receipt form sits below the whole passage. When a student
+  // picks their first quote, bring the form into view so they can keep going
+  // without hunting for it, and keep the submit button reachable via a sticky
+  // bar at the bottom of the screen.
+  const formRef = useRef<HTMLDivElement>(null);
+  const hadEvidence = useRef(!!sub);
+  useEffect(() => {
+    if (evidence && !hadEvidence.current && window.matchMedia("(max-width: 1023px)").matches) {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    hadEvidence.current = !!evidence;
+  }, [evidence]);
+
+  const ready = !!evidence && claim.trim().length > 0 && reasoning.trim().length > 0 && confidence > 0;
+
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
+    <div className="mx-auto grid max-w-6xl gap-6 pb-20 lg:grid-cols-2 lg:pb-0">
       {filedKey > 0 && (
         <PhaseSplash text="Receipt submitted" sub="You can still improve it until time's up" splashKey={`filed-${filedKey}`} durationMs={1200} />
       )}
@@ -223,7 +238,7 @@ export function SubmitScreen({ state, refresh }: { state: PlayState; refresh: ()
         />
       </div>
 
-      <div className="lg:sticky lg:top-16 lg:self-start">
+      <div ref={formRef} className="scroll-mt-16 lg:sticky lg:top-16 lg:self-start">
         <ClassMeter label="Receipts in" value={state.pulse.submitted} total={state.pulse.joined} />
         <div className="paper receipt-jagged relative mt-3 p-6">
           {saved && (
@@ -313,13 +328,50 @@ export function SubmitScreen({ state, refresh }: { state: PlayState; refresh: ()
               Submissions are locked.
             </p>
           ) : (
-            <button onClick={submit} disabled={busy} className="btn btn-primary display w-full py-3 text-2xl">
+            <button onClick={submit} disabled={busy} className="btn btn-primary display hidden w-full py-3 text-2xl lg:flex">
               {busy ? "Submitting…" : saved ? "Update my receipt" : "Submit my receipt"}
             </button>
           )}
         </div>
       </div>
+
+      {/* Sticky mobile action bar — keeps the primary action reachable no
+          matter how far the student has scrolled through the passage. */}
+      {!locked && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line-300 bg-paper-50/95 px-4 py-2.5 backdrop-blur lg:hidden">
+          <div className="mx-auto flex max-w-md items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs font-bold">
+              <ReadyDot on={!!evidence} label="Quote" />
+              <ReadyDot on={claim.trim().length > 0} label="Claim" />
+              <ReadyDot on={reasoning.trim().length >= LIMITS.reasoning.min} label="Why" />
+            </div>
+            <button
+              onClick={() => {
+                if (!ready) {
+                  formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  if (!evidence) setError("Select your evidence in the passage first.");
+                  return;
+                }
+                submit();
+              }}
+              disabled={busy}
+              className={`btn display ml-auto px-5 py-2.5 text-lg ${ready ? "btn-primary" : "btn-secondary"}`}
+            >
+              {busy ? "…" : saved ? "Update" : ready ? "Lock in receipt" : "Finish receipt"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function ReadyDot({ on, label }: { on: boolean; label: string }) {
+  return (
+    <span className={`flex items-center gap-1 ${on ? "text-teal-600" : "text-muted-500"}`}>
+      <span className={`h-2.5 w-2.5 rounded-full ${on ? "bg-teal-500" : "bg-cream-200 ring-1 ring-line-300"}`} />
+      {label}
+    </span>
   );
 }
 
