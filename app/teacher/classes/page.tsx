@@ -17,36 +17,40 @@ export default async function ClassesPage({
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-6 font-serif text-3xl font-bold">Classes</h1>
-      {error && <p className="mb-4 rounded-lg bg-rose-100 px-4 py-3 text-sm text-rose-900">{error}</p>}
+      <h1 className="display mb-6 text-5xl">Classes</h1>
+      {error && (
+        <p className="mb-4 rounded-xl border-2 border-alarm-500 bg-alarm-500/10 px-4 py-3 text-sm font-semibold text-alarm-400">
+          {error}
+        </p>
+      )}
 
-      <form action={createClass} className="mb-8 flex flex-wrap items-end gap-3 rounded-xl border border-paper-200 bg-white p-4">
-        <label className="flex grow flex-col gap-1">
-          <span className="text-sm font-medium">Class name</span>
-          <input name="name" required placeholder="Block B — Grade 8" className="rounded-lg border border-paper-200 px-3 py-2" />
+      <form action={createClass} className="card mb-8 flex flex-wrap items-end gap-3 p-4">
+        <label className="flex grow flex-col gap-1.5">
+          <span className="text-xs font-bold uppercase tracking-wider text-smoke-400">Class name</span>
+          <input name="name" required placeholder="Block B — Grade 8" className="field" />
         </label>
-        <label className="flex w-28 flex-col gap-1">
-          <span className="text-sm font-medium">Grade</span>
-          <input name="grade" placeholder="8" className="rounded-lg border border-paper-200 px-3 py-2" />
+        <label className="flex w-28 flex-col gap-1.5">
+          <span className="text-xs font-bold uppercase tracking-wider text-smoke-400">Grade</span>
+          <input name="grade" placeholder="8" className="field" />
         </label>
-        <button type="submit" className="rounded-lg bg-ink-950 px-4 py-2 font-semibold text-paper-50 hover:bg-ink-900">
+        <button type="submit" className="btn btn-gold px-4 py-2.5">
           Add class
         </button>
       </form>
 
       {list.length === 0 ? (
-        <p className="text-sm text-ink-500">No classes yet. Add one above — it takes ten seconds.</p>
+        <p className="text-sm text-smoke-400">No classes yet. Add one above — it takes ten seconds.</p>
       ) : (
         <ul className="space-y-2">
           {list.map((c) => (
-            <li key={c.id} className="flex items-center justify-between rounded-xl border border-paper-200 bg-white px-4 py-3">
+            <li key={c.id} className="card flex items-center justify-between px-4 py-3">
               <div>
-                <div className="font-semibold">{c.name}</div>
-                {c.grade && <div className="text-sm text-ink-500">Grade {c.grade}</div>}
+                <div className="font-bold text-smoke-50">{c.name}</div>
+                {c.grade && <div className="text-sm text-smoke-400">Grade {c.grade}</div>}
               </div>
               <form action={archiveClass}>
                 <input type="hidden" name="id" value={c.id} />
-                <button type="submit" className="text-sm text-ink-500 underline hover:text-rose-700">
+                <button type="submit" className="text-sm text-smoke-400 underline hover:text-alarm-400">
                   Archive
                 </button>
               </form>

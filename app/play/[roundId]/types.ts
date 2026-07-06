@@ -72,9 +72,18 @@ export interface RevealData {
   spotlights: { claim: string; evidenceText: string; reasoning: string; votes: number }[];
 }
 
+export interface ClassPulse {
+  joined: number;
+  submitted: number;
+  reviewsDone: number;
+  reviewsAssigned: number;
+  reflected: number;
+}
+
 export interface PlayState {
   round: PlayRound;
   me: { id: string; name: string };
+  pulse: ClassPulse;
   passage?: { title: string; text: string; vocabNotes: string | null };
   prompt?: { text: string; promptType: string };
   annotations: PlayAnnotation[];

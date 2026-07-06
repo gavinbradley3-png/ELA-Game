@@ -23,70 +23,76 @@ export default async function TeacherHome() {
 
   return (
     <div>
-      <h1 className="mb-2 font-serif text-3xl font-bold">Welcome back, {teacher.name}</h1>
-      <p className="mb-8 text-ink-500">Run a live Evidence Battle: pick a class, a passage, a prompt — go.</p>
+      <h1 className="display mb-1 text-5xl">Welcome back, {teacher.name}</h1>
+      <p className="mb-8 text-smoke-400">Run a live Evidence Battle: pick a class, a passage, a prompt — go.</p>
 
       {!ready && (
-        <div className="mb-8 rounded-xl border border-amber-300 bg-amber-50 p-5">
-          <h2 className="mb-1 font-semibold">Two quick steps before your first round</h2>
-          <ol className="list-inside list-decimal text-sm text-ink-700">
+        <div className="mb-8 rounded-xl border-2 border-gold-400 bg-gold-400/10 p-5">
+          <h2 className="mb-1 font-bold text-smoke-50">Two quick steps before your first round</h2>
+          <ol className="list-inside list-decimal text-sm text-smoke-300">
             {classList.length === 0 && (
-              <li><Link href="/teacher/classes" className="underline">Create a class</Link> (just a name, like &ldquo;Block B — Grade 8&rdquo;).</li>
+              <li>
+                <Link href="/teacher/classes" className="text-gold-400 underline">Create a class</Link>{" "}
+                (just a name, like &ldquo;Block B — Grade 8&rdquo;).
+              </li>
             )}
             {passageList.length === 0 && (
-              <li><Link href="/teacher/passages/new" className="underline">Add a passage</Link> and write one challenge prompt for it.</li>
+              <li>
+                <Link href="/teacher/passages/new" className="text-gold-400 underline">Add a passage</Link>{" "}
+                and write one challenge prompt for it.
+              </li>
             )}
           </ol>
         </div>
       )}
 
       <div className="mb-10 grid gap-4 sm:grid-cols-3">
-        <Link href="/teacher/rounds/new" className="rounded-xl border-2 border-ink-950 bg-white p-5 hover:bg-paper-100">
-          <div className="text-2xl">🚀</div>
-          <div className="font-semibold">Launch a round</div>
-          <div className="text-sm text-ink-500">Start a live Evidence Battle</div>
+        <Link href="/teacher/rounds/new" className="card border-2 border-gold-400 p-5 transition hover:bg-night-800">
+          <div className="text-3xl">🧾</div>
+          <div className="display text-2xl text-gold-400">Launch a round</div>
+          <div className="text-sm text-smoke-400">Start a live Evidence Battle</div>
         </Link>
-        <Link href="/teacher/passages" className="rounded-xl border border-paper-200 bg-white p-5 hover:bg-paper-100">
-          <div className="text-2xl">📄</div>
-          <div className="font-semibold">Passages ({passageList.length})</div>
-          <div className="text-sm text-ink-500">Your reusable passage bank</div>
+        <Link href="/teacher/passages" className="card p-5 transition hover:bg-night-800">
+          <div className="text-3xl">📂</div>
+          <div className="display text-2xl">Passages ({passageList.length})</div>
+          <div className="text-sm text-smoke-400">Your case-file bank</div>
         </Link>
-        <Link href="/teacher/classes" className="rounded-xl border border-paper-200 bg-white p-5 hover:bg-paper-100">
-          <div className="text-2xl">🏫</div>
-          <div className="font-semibold">Classes ({classList.length})</div>
-          <div className="text-sm text-ink-500">Groups you teach</div>
+        <Link href="/teacher/classes" className="card p-5 transition hover:bg-night-800">
+          <div className="text-3xl">🏫</div>
+          <div className="display text-2xl">Classes ({classList.length})</div>
+          <div className="text-sm text-smoke-400">Groups you teach</div>
         </Link>
       </div>
 
-      <h2 className="mb-3 font-serif text-xl font-bold">Recent rounds</h2>
+      <h2 className="display mb-3 text-3xl">Recent rounds</h2>
       {roundList.length === 0 ? (
-        <p className="text-sm text-ink-500">No rounds yet. Your first one is a click away.</p>
+        <p className="text-sm text-smoke-400">No rounds yet. Your first one is a click away.</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-paper-200 bg-white">
+        <div className="card overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-paper-200 text-left text-ink-500">
-                <th className="px-4 py-2 font-medium">Passage</th>
-                <th className="px-4 py-2 font-medium">Class</th>
-                <th className="px-4 py-2 font-medium">Code</th>
-                <th className="px-4 py-2 font-medium">Status</th>
-                <th className="px-4 py-2 font-medium"></th>
+              <tr className="border-b border-night-700 text-left text-smoke-400">
+                <th className="px-4 py-2.5 font-semibold">Passage</th>
+                <th className="px-4 py-2.5 font-semibold">Class</th>
+                <th className="px-4 py-2.5 font-semibold">Code</th>
+                <th className="px-4 py-2.5 font-semibold">Status</th>
+                <th className="px-4 py-2.5 font-semibold"></th>
               </tr>
             </thead>
             <tbody>
               {roundList.map((r) => (
-                <tr key={r.id} className="border-b border-paper-100 last:border-0">
-                  <td className="px-4 py-2">{passageById.get(r.passageId)?.title ?? "—"}</td>
-                  <td className="px-4 py-2">{classById.get(r.classId)?.name ?? "—"}</td>
-                  <td className="px-4 py-2 font-mono">{r.joinCode}</td>
-                  <td className="px-4 py-2">{PHASE_LABELS[r.phase] ?? r.phase}</td>
-                  <td className="px-4 py-2 text-right">
+                <tr key={r.id} className="border-b border-night-800 last:border-0">
+                  <td className="px-4 py-2.5 text-smoke-50">{passageById.get(r.passageId)?.title ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-smoke-300">{classById.get(r.classId)?.name ?? "—"}</td>
+                  <td className="display px-4 py-2.5 text-lg text-gold-400">{r.joinCode}</td>
+                  <td className="px-4 py-2.5 text-smoke-300">{PHASE_LABELS[r.phase] ?? r.phase}</td>
+                  <td className="px-4 py-2.5 text-right">
                     {isActivePhase(r.phase) ? (
-                      <Link href={`/teacher/rounds/${r.id}/control`} className="font-semibold text-accent-600 underline">
+                      <Link href={`/teacher/rounds/${r.id}/control`} className="font-bold text-gold-400 underline">
                         Control panel
                       </Link>
                     ) : (
-                      <Link href={`/teacher/rounds/${r.id}/dashboard`} className="underline">
+                      <Link href={`/teacher/rounds/${r.id}/dashboard`} className="text-smoke-300 underline">
                         Results
                       </Link>
                     )}

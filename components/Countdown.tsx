@@ -23,19 +23,19 @@ export function Countdown({
   const totalSeconds = Math.ceil(remaining / 1000);
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
-  const urgent = totalSeconds <= 30 && pausedRemainingMs == null;
+  const urgent = totalSeconds <= 30 && totalSeconds > 0 && pausedRemainingMs == null;
   return (
     <span
-      className={`rounded-lg px-3 py-1 font-mono text-lg font-bold tabular-nums ${
+      className={`display inline-block rounded-lg border-2 px-3 py-0.5 text-3xl tabular-nums ${
         totalSeconds === 0
-          ? "bg-rose-100 text-rose-800"
+          ? "border-alarm-500 bg-alarm-500/15 text-alarm-400"
           : urgent
-            ? "bg-amber-100 text-amber-900"
-            : "bg-paper-100 text-ink-900"
+            ? "timer-urgent border-alarm-500 text-alarm-400"
+            : "border-night-600 bg-night-900 text-gold-400"
       }`}
       aria-live={urgent ? "polite" : undefined}
     >
-      {totalSeconds === 0 ? "Time" : `${m}:${String(s).padStart(2, "0")}`}
+      {totalSeconds === 0 ? "TIME!" : `${m}:${String(s).padStart(2, "0")}`}
     </span>
   );
 }

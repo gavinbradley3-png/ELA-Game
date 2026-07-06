@@ -10,6 +10,7 @@ import {
   peerComparisons,
   revisions,
   reflections,
+  studentSessions,
 } from "@/lib/db";
 import { getStudentSession, touchStudentSession } from "@/lib/student";
 import { PHASE_ORDER } from "@/lib/phases";
@@ -37,6 +38,7 @@ export async function GET(req: Request) {
   const state: Record<string, unknown> = {
     round: publicRoundState(round),
     me: { id: session.id, name: session.displayName },
+    pulse: await buildPulse(round.id),
   };
 
   if (atLeast("reading") && round.phase !== "cancelled") {
@@ -136,6 +138,26 @@ export async function GET(req: Request) {
   state.reflected = !!myReflection;
 
   return NextResponse.json(state);
+}
+
+/** Class-wide counts that power the student hype meters. Names never leave the server. */
+async function buildPulse(roundId: string) {
+  const [sessions, subs, comps, refls] = await Promise.all([
+    db.select({ status: studentSessions.status }).from(studentSessions).where(eq(studentSessions.roundId, roundId)),
+    db.select({ status: submissions.status }).from(submissions).where(eq(submissions.roundId, roundId)),
+    db
+      .select({ completedAt: peerComparisons.completedAt })
+      .from(peerComparisons)
+      .where(eq(peerComparisons.roundId, roundId)),
+    db.select({ id: reflections.id }).from(reflections).where(eq(reflections.roundId, roundId)),
+  ]);
+  return {
+    joined: sessions.filter((s) => s.status === "active").length,
+    submitted: subs.filter((s) => s.status === "submitted").length,
+    reviewsDone: comps.filter((c) => c.completedAt).length,
+    reviewsAssigned: comps.length,
+    reflected: refls.length,
+  };
 }
 
 async function loadComparisons(roundId: string, reviewerId: string) {

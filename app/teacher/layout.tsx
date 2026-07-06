@@ -8,27 +8,24 @@ export default async function TeacherLayout({ children }: { children: React.Reac
   if (!user) redirect("/login");
   return (
     <div className="min-h-screen">
-      <header className="border-b border-paper-200 bg-white">
+      <header className="border-b border-night-700 bg-night-900">
         <nav className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3">
-          <Link href="/teacher" className="font-serif text-xl font-bold">
+          <Link href="/teacher" className="display text-3xl text-gold-400">
             Receipts
           </Link>
-          <Link href="/teacher/classes" className="text-sm font-medium text-ink-700 hover:text-ink-950">
+          <Link href="/teacher/classes" className="text-sm font-semibold text-smoke-300 hover:text-smoke-50">
             Classes
           </Link>
-          <Link href="/teacher/passages" className="text-sm font-medium text-ink-700 hover:text-ink-950">
+          <Link href="/teacher/passages" className="text-sm font-semibold text-smoke-300 hover:text-smoke-50">
             Passages
           </Link>
-          <Link
-            href="/teacher/rounds/new"
-            className="rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-accent-500"
-          >
-            Launch a round
+          <Link href="/teacher/rounds/new" className="btn btn-gold px-3 py-1.5 text-sm">
+            🧾 Launch a round
           </Link>
-          <div className="ml-auto flex items-center gap-3 text-sm text-ink-500">
+          <div className="ml-auto flex items-center gap-3 text-sm text-smoke-400">
             <span>{user.name}</span>
             <form action={logout}>
-              <button type="submit" className="underline hover:text-ink-950">Sign out</button>
+              <button type="submit" className="underline hover:text-smoke-50">Sign out</button>
             </form>
           </div>
         </nav>

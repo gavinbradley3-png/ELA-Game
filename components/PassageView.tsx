@@ -84,7 +84,7 @@ export function PassageView({ text, highlights = [], evidenceRange, selectable, 
       ref={containerRef}
       onMouseUp={handleSelection}
       onTouchEnd={handleSelection}
-      className={`passage-text rounded-xl border border-paper-200 bg-white p-6 ${selectable ? "cursor-text select-text" : ""}`}
+      className={`passage-text paper p-6 sm:p-8 ${selectable ? "cursor-text select-text" : ""}`}
       style={{ fontSize: `${1.125 * fontScale}rem` }}
     >
       {segments.map((seg) =>

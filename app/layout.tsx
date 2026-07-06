@@ -1,10 +1,18 @@
 import type { Metadata, Viewport } from "next";
+import { Bebas_Neue } from "next/font/google";
 import "./globals.css";
 
+const headline = Bebas_Neue({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-headline",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Receipts — Live Classroom Evidence Battles",
+  title: "Receipts — Bring the Evidence",
   description:
-    "A teacher-led live ELA game where students prove their claims with textual evidence, compare reasoning, and revise.",
+    "The live classroom evidence battle. Students read, annotate, make claims, bring the receipts, judge the jury round, and revise — teacher runs the room.",
 };
 
 export const viewport: Viewport = {
@@ -14,7 +22,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={headline.variable}>
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );

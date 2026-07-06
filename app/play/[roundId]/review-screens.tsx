@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { PassageView } from "@/components/PassageView";
+import { ClassMeter } from "@/components/juice";
 import { PEER_CRITERIA } from "@/lib/tags";
 import { LIMITS } from "@/lib/validate";
 import { postJson, type PlayState, type PlayComparison, type AnonSubmission } from "./types";
 
 // ---------------------------------------------------------------------------
-// Peer review: anonymous side-by-side comparison with required justification
+// Peer review — "Jury duty"
 // ---------------------------------------------------------------------------
 
 export function ReviewScreen({ state, refresh }: { state: PlayState; refresh: () => Promise<void> }) {
@@ -17,20 +18,22 @@ export function ReviewScreen({ state, refresh }: { state: PlayState; refresh: ()
 
   if (comparisons.length === 0) {
     return (
-      <p className="mx-auto max-w-md text-center text-ink-700">
-        No comparisons assigned to you this round. Watch the board — discussion is coming.
+      <p className="mx-auto max-w-md pt-12 text-center text-smoke-300">
+        No cases assigned to you this round. Watch the board — the verdict is coming.
       </p>
     );
   }
   if (!current) {
     return (
-      <div className="mx-auto max-w-md text-center">
-        <div className="mb-3 text-5xl">🧑‍⚖️</div>
-        <h1 className="mb-2 font-serif text-2xl font-bold">All comparisons done</h1>
-        <p className="text-ink-700">
-          You judged {doneCount} matchup{doneCount === 1 ? "" : "s"}. Next: use what you saw to make your
-          own answer stronger.
+      <div className="mx-auto max-w-md pt-8 text-center">
+        <span className="stamp pop inline-block border-4 px-4 py-1 text-4xl text-win-400">Jury duty done</span>
+        <p className="mt-4 text-smoke-300">
+          You judged {doneCount} matchup{doneCount === 1 ? "" : "s"}. Next: use what you saw to make your own
+          answer stronger.
         </p>
+        <div className="mx-auto mt-6 max-w-xs">
+          <ClassMeter label="Class votes in" value={state.pulse.reviewsDone} total={state.pulse.reviewsAssigned} />
+        </div>
       </div>
     );
   }
@@ -68,7 +71,7 @@ function ComparisonCard({
   async function submit() {
     setError(null);
     if (!selected) {
-      setError("Pick the stronger response first.");
+      setError("Pick the stronger exhibit first.");
       return;
     }
     setBusy(true);
@@ -90,13 +93,13 @@ function ComparisonCard({
   return (
     <div className="mx-auto max-w-5xl">
       <div className="mb-4 text-center">
-        <h1 className="font-serif text-2xl font-bold">Which response is stronger?</h1>
-        <p className="text-sm text-ink-500">
-          Matchup {index} of {total} · Responses are anonymous. Judge the thinking, not the person.
+        <h1 className="display text-5xl">Which one holds up in court?</h1>
+        <p className="text-sm text-smoke-400">
+          Matchup {index} of {total} · Exhibits are anonymous. Judge the thinking, not the person.
         </p>
         {state.prompt && (
-          <p className="mx-auto mt-2 max-w-2xl rounded-lg bg-paper-100 px-3 py-2 text-sm">
-            <span className="font-semibold">The challenge was:</span> {state.prompt.text}
+          <p className="mx-auto mt-2 max-w-2xl rounded-xl bg-night-800 px-3 py-2 text-sm text-smoke-300">
+            <span className="font-bold text-smoke-50">The question was:</span> {state.prompt.text}
           </p>
         )}
       </div>
@@ -106,37 +109,45 @@ function ComparisonCard({
           <button
             key={sub.id}
             onClick={() => setSelected(sub.id)}
-            className={`rounded-xl border-2 bg-white p-4 text-left transition ${
-              selected === sub.id ? "border-accent-600 ring-2 ring-accent-600/30" : "border-paper-200 hover:border-ink-500"
+            className={`rise card relative p-4 pt-5 text-left transition ${
+              selected === sub.id
+                ? "border-4 border-gold-400 shadow-[0_0_30px_-8px_var(--color-gold-400)]"
+                : "border-night-700 hover:border-smoke-400"
             }`}
           >
-            <div className="mb-2 flex items-center justify-between">
-              <span className="rounded-full bg-ink-950 px-2.5 py-0.5 text-xs font-bold text-paper-50">
-                Response {label}
+            <span
+              className={`stamp absolute -top-3.5 left-4 border-2 px-2 py-0 text-sm ${
+                selected === sub.id ? "bg-night-900 text-gold-400" : "bg-night-900 text-smoke-300"
+              }`}
+            >
+              Exhibit {label}
+            </span>
+            {selected === sub.id && (
+              <span className="pop absolute -top-3.5 right-4 rounded-full bg-gold-400 px-2.5 py-0.5 text-xs font-black text-night-950">
+                YOUR PICK ✓
               </span>
-              {selected === sub.id && <span className="text-sm font-semibold text-accent-600">Your pick ✓</span>}
+            )}
+            <div className="mb-2">
+              <div className="text-xs font-bold uppercase tracking-wider text-smoke-400">Claim</div>
+              <p className="text-sm font-semibold text-smoke-50">{sub.claim}</p>
             </div>
             <div className="mb-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-ink-500">Claim</div>
-              <p className="text-sm font-medium">{sub.claim}</p>
-            </div>
-            <div className="mb-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-ink-500">Evidence</div>
-              <blockquote className="border-l-2 border-paper-200 pl-2 font-serif text-sm italic text-ink-700">
+              <div className="text-xs font-bold uppercase tracking-wider text-smoke-400">The receipt</div>
+              <blockquote className="paper mt-1 px-2.5 py-1.5 font-serif text-sm italic">
                 &ldquo;{sub.evidenceText}&rdquo;
               </blockquote>
             </div>
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-ink-500">Reasoning</div>
-              <p className="text-sm text-ink-700">{sub.reasoning}</p>
+              <div className="text-xs font-bold uppercase tracking-wider text-smoke-400">Reasoning</div>
+              <p className="text-sm text-smoke-300">{sub.reasoning}</p>
             </div>
           </button>
         ))}
       </div>
 
-      <div className="mx-auto max-w-2xl rounded-xl border border-paper-200 bg-white p-5">
+      <div className="card mx-auto max-w-2xl p-5">
         <div className="mb-3">
-          <div className="mb-1.5 text-sm font-medium">Why is it stronger? Pick your reasons:</div>
+          <div className="mb-1.5 text-sm font-bold text-smoke-50">Why does it win? Pick your reasons:</div>
           <div className="flex flex-wrap gap-1.5">
             {PEER_CRITERIA.map((c) => (
               <button
@@ -144,8 +155,10 @@ function ComparisonCard({
                 onClick={() =>
                   setCriteria((prev) => (prev.includes(c.id) ? prev.filter((x) => x !== c.id) : [...prev, c.id]))
                 }
-                className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${
-                  criteria.includes(c.id) ? "border-ink-950 bg-ink-950 text-paper-50" : "border-paper-200 hover:bg-paper-100"
+                className={`rounded-lg border-2 px-2.5 py-1 text-xs font-bold transition ${
+                  criteria.includes(c.id)
+                    ? "border-gold-400 bg-gold-400 text-night-950"
+                    : "border-night-600 text-smoke-300 hover:border-smoke-400"
                 }`}
               >
                 {c.label}
@@ -154,26 +167,26 @@ function ComparisonCard({
           </div>
         </div>
         <label className="mb-3 block">
-          <div className="mb-1 text-sm font-medium">Justify your vote — be specific:</div>
+          <div className="mb-1 text-sm font-bold text-smoke-50">Justify your verdict — be specific:</div>
           <textarea
             value={justification}
             onChange={(e) => setJustification(e.target.value)}
             rows={3}
             maxLength={LIMITS.justification.max}
-            placeholder="Response A's evidence actually shows fear, not anger, because…"
-            className="w-full rounded-lg border border-paper-200 px-3 py-2 text-sm"
+            placeholder="Exhibit A's receipt actually shows fear, not anger, because…"
+            className="field text-sm"
           />
-          <div className="mt-1 text-right text-xs text-ink-500">
+          <div className="mt-1 text-right text-xs text-smoke-400">
             {justification.length}/{LIMITS.justification.min}+ characters
           </div>
         </label>
-        {error && <p className="mb-3 rounded-lg bg-rose-100 px-3 py-2 text-sm text-rose-900">{error}</p>}
-        <button
-          onClick={submit}
-          disabled={busy}
-          className="w-full rounded-xl bg-ink-950 px-4 py-3 font-semibold text-paper-50 hover:bg-ink-900 disabled:opacity-60"
-        >
-          {busy ? "Saving…" : "Lock in my vote"}
+        {error && (
+          <p className="pop mb-3 rounded-xl border-2 border-alarm-500 bg-alarm-500/10 px-3 py-2 text-sm font-semibold text-alarm-400">
+            {error}
+          </p>
+        )}
+        <button onClick={submit} disabled={busy} className="btn btn-gold display w-full py-3 text-3xl">
+          {busy ? "Saving…" : "Lock in my verdict ⚖️"}
         </button>
       </div>
     </div>
@@ -181,13 +194,13 @@ function ComparisonCard({
 }
 
 // ---------------------------------------------------------------------------
-// Revision: see peer feedback, then revise or defend
+// Revision — "The appeal"
 // ---------------------------------------------------------------------------
 
 export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: () => Promise<void> }) {
   const sub = state.submission;
   const rev = state.revision;
-  const [mode, setMode] = useState<"choose" | "revise" | "defend">(rev ? "choose" : "choose");
+  const [mode, setMode] = useState<"choose" | "revise" | "defend">("choose");
   const [evidence, setEvidence] = useState<{ start: number; end: number; text: string } | null>(
     sub ? { start: sub.evidenceStart, end: sub.evidenceEnd, text: sub.evidenceText } : null,
   );
@@ -199,9 +212,9 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
 
   if (!sub) {
     return (
-      <p className="mx-auto max-w-md text-center text-ink-700">
-        You didn&apos;t submit a response this round, so there&apos;s nothing to revise. Follow the class
-        discussion — you&apos;ll battle next round.
+      <p className="mx-auto max-w-md pt-12 text-center text-smoke-300">
+        You didn&apos;t file a receipt this round, so there&apos;s nothing to revise. Follow the discussion —
+        you&apos;ll battle next round.
       </p>
     );
   }
@@ -231,37 +244,45 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
 
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="mb-1 text-center font-serif text-2xl font-bold">Second draft beats first draft</h1>
-      <p className="mb-5 text-center text-sm text-ink-500">
-        You just judged other responses. Now make yours stronger — or defend why it already holds up.
+      <h1 className="display mb-1 text-center text-5xl">Second draft beats first draft</h1>
+      <p className="mb-5 text-center text-sm text-smoke-400">
+        You just judged other detectives. Now upgrade your answer — or defend it like a pro.
       </p>
 
       {rev && (
-        <p className="mx-auto mb-4 max-w-2xl rounded-lg bg-emerald-100 px-4 py-2 text-center text-sm font-medium text-emerald-900">
-          ✓ Revision saved{rev.keptOriginal ? " (defended original)" : ""}. You can still change it until the phase ends.
+        <p className="pop mx-auto mb-4 max-w-2xl rounded-xl border-2 border-win-400 bg-win-400/10 px-4 py-2 text-center text-sm font-bold text-win-400">
+          ✓ {rev.keptOriginal ? "Defense filed" : "Appeal filed"}. You can still change it until time&apos;s up.
         </p>
       )}
 
       <div className="mb-5 grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-paper-200 bg-white p-4">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink-500">Your original response</h2>
-          <p className="mb-1 text-sm font-medium">{sub.claim}</p>
-          <blockquote className="mb-1 border-l-2 border-paper-200 pl-2 font-serif text-sm italic text-ink-700">
+        <div className="card p-4">
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-smoke-400">Your original response</h2>
+          <p className="mb-1 text-sm font-semibold text-smoke-50">{sub.claim}</p>
+          <blockquote className="paper my-1.5 px-2.5 py-1.5 font-serif text-sm italic">
             &ldquo;{sub.evidenceText}&rdquo;
           </blockquote>
-          <p className="text-sm text-ink-700">{sub.reasoning}</p>
+          <p className="text-sm text-smoke-300">{sub.reasoning}</p>
         </div>
-        <div className="rounded-xl border border-paper-200 bg-white p-4">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink-500">What peers thought</h2>
+        <div className="card p-4">
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-smoke-400">The jury&apos;s take</h2>
           {fb && fb.timesCompared > 0 ? (
             <>
-              <p className="mb-2 text-sm">
-                Your response appeared in <strong>{fb.timesCompared}</strong> matchup{fb.timesCompared === 1 ? "" : "s"} and
-                won <strong>{fb.votesFor}</strong>.
+              <p className="mb-2 text-sm text-smoke-300">
+                Your response went to court <strong className="text-smoke-50">{fb.timesCompared}</strong> time
+                {fb.timesCompared === 1 ? "" : "s"} and won{" "}
+                <strong className="display text-xl text-gold-400">{fb.votesFor}</strong>.
               </p>
               <ul className="space-y-1.5">
                 {fb.justifications.slice(0, 4).map((j, i) => (
-                  <li key={i} className={`rounded-lg px-2.5 py-1.5 text-xs ${j.pickedMine ? "bg-emerald-50 text-emerald-900" : "bg-paper-100 text-ink-700"}`}>
+                  <li
+                    key={i}
+                    className={`rounded-lg border-l-4 px-2.5 py-1.5 text-xs ${
+                      j.pickedMine
+                        ? "border-win-400 bg-win-400/10 text-win-400"
+                        : "border-night-600 bg-night-800 text-smoke-300"
+                    }`}
+                  >
                     {j.pickedMine ? "✓ Picked yours: " : "✗ Picked the other: "}
                     {j.text}
                   </li>
@@ -269,26 +290,22 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
               </ul>
             </>
           ) : (
-            <p className="text-sm text-ink-500">No peer votes on your response yet. Revise based on the strong work you just read.</p>
+            <p className="text-sm text-smoke-400">
+              No jury votes on your response yet. Revise based on the strong work you just read.
+            </p>
           )}
         </div>
       </div>
 
       {mode === "choose" && (
         <div className="mx-auto flex max-w-2xl flex-col gap-3 sm:flex-row">
-          <button
-            onClick={() => setMode("revise")}
-            className="flex-1 rounded-xl bg-accent-600 px-4 py-4 font-semibold text-white hover:bg-accent-500"
-          >
-            ✏️ Revise my response
-            <span className="block text-xs font-normal opacity-90">Change evidence, claim, or reasoning</span>
+          <button onClick={() => setMode("revise")} className="btn btn-gold flex-1 flex-col py-4">
+            <span className="display text-3xl">✏️ File an appeal</span>
+            <span className="text-xs font-semibold opacity-80">Upgrade your evidence, claim, or reasoning</span>
           </button>
-          <button
-            onClick={() => setMode("defend")}
-            className="flex-1 rounded-xl border-2 border-ink-950 bg-white px-4 py-4 font-semibold hover:bg-paper-100"
-          >
-            🛡️ Defend my original
-            <span className="block text-xs font-normal text-ink-500">Explain why it holds up against what you saw</span>
+          <button onClick={() => setMode("defend")} className="btn btn-dark flex-1 flex-col py-4">
+            <span className="display text-3xl">🛡️ Defend my original</span>
+            <span className="text-xs font-semibold text-smoke-400">Explain why it still holds up</span>
           </button>
         </div>
       )}
@@ -296,7 +313,7 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
       {mode === "revise" && state.passage && (
         <div className="grid gap-6 lg:grid-cols-2">
           <div>
-            <p className="mb-2 text-sm text-ink-500">Want stronger evidence? Select a new quote from the passage.</p>
+            <p className="mb-2 text-sm text-smoke-400">Want a stronger receipt? Select a new quote from the case file.</p>
             <PassageView
               text={state.passage.text}
               highlights={state.annotations}
@@ -305,37 +322,42 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
               onSelectRange={(start, end, text) => setEvidence({ start, end, text })}
             />
           </div>
-          <div className="lg:sticky lg:top-4 lg:self-start">
-            <div className="rounded-xl border border-paper-200 bg-white p-5">
-              <h2 className="mb-3 font-serif text-lg font-bold">Revised response</h2>
+          <div className="lg:sticky lg:top-16 lg:self-start">
+            <div className="card p-5">
+              <h2 className="display mb-3 text-2xl">The appeal</h2>
               {evidence && (
-                <blockquote className="mb-3 rounded-lg border-l-4 border-accent-600 bg-paper-100 px-3 py-2 font-serif text-sm italic">
+                <blockquote className="paper mb-3 px-3 py-2 font-serif text-sm italic">
                   &ldquo;{truncate(evidence.text, 220)}&rdquo;
                 </blockquote>
               )}
               <label className="mb-3 block">
-                <div className="mb-1 text-sm font-medium">Claim</div>
-                <textarea value={claim} onChange={(e) => setClaim(e.target.value)} rows={2}
-                  className="w-full rounded-lg border border-paper-200 px-3 py-2 text-sm" />
+                <div className="mb-1 text-sm font-bold text-smoke-50">Claim</div>
+                <textarea value={claim} onChange={(e) => setClaim(e.target.value)} rows={2} className="field text-sm" />
               </label>
               <label className="mb-3 block">
-                <div className="mb-1 text-sm font-medium">Reasoning</div>
-                <textarea value={reasoning} onChange={(e) => setReasoning(e.target.value)} rows={4}
-                  className="w-full rounded-lg border border-paper-200 px-3 py-2 text-sm" />
+                <div className="mb-1 text-sm font-bold text-smoke-50">Reasoning</div>
+                <textarea value={reasoning} onChange={(e) => setReasoning(e.target.value)} rows={4} className="field text-sm" />
               </label>
               <label className="mb-3 block">
-                <div className="mb-1 text-sm font-medium">What did you change, and why?</div>
-                <textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} rows={2}
-                  placeholder="I swapped my evidence because the quote about her hands shaking proves fear better than…"
-                  className="w-full rounded-lg border border-paper-200 px-3 py-2 text-sm" />
+                <div className="mb-1 text-sm font-bold text-smoke-50">What did you change, and why?</div>
+                <textarea
+                  value={explanation}
+                  onChange={(e) => setExplanation(e.target.value)}
+                  rows={2}
+                  placeholder="I swapped my receipt because the trust line proves WHY the shaking hands matter…"
+                  className="field text-sm"
+                />
               </label>
-              {error && <p className="mb-3 rounded-lg bg-rose-100 px-3 py-2 text-sm text-rose-900">{error}</p>}
+              {error && (
+                <p className="pop mb-3 rounded-xl border-2 border-alarm-500 bg-alarm-500/10 px-3 py-2 text-sm font-semibold text-alarm-400">
+                  {error}
+                </p>
+              )}
               <div className="flex gap-2">
-                <button onClick={() => save(false)} disabled={busy}
-                  className="flex-1 rounded-xl bg-accent-600 px-4 py-3 font-semibold text-white hover:bg-accent-500 disabled:opacity-60">
-                  {busy ? "Saving…" : "Save revision"}
+                <button onClick={() => save(false)} disabled={busy} className="btn btn-gold display flex-1 py-2.5 text-2xl">
+                  {busy ? "Filing…" : "File the appeal"}
                 </button>
-                <button onClick={() => setMode("choose")} className="rounded-xl px-3 py-3 text-sm text-ink-500 underline">
+                <button onClick={() => setMode("choose")} className="px-3 text-sm text-smoke-400 underline">
                   Back
                 </button>
               </div>
@@ -345,26 +367,29 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
       )}
 
       {mode === "defend" && (
-        <div className="mx-auto max-w-2xl rounded-xl border border-paper-200 bg-white p-5">
-          <h2 className="mb-2 font-serif text-lg font-bold">Defend your original</h2>
-          <p className="mb-3 text-sm text-ink-500">
-            Keeping your answer is a reasoning move too — but you have to earn it. What did you see in
-            other responses, and why does yours still stand?
+        <div className="card mx-auto max-w-2xl p-5">
+          <h2 className="display mb-2 text-2xl">Defend your original</h2>
+          <p className="mb-3 text-sm text-smoke-400">
+            Keeping your answer is a power move — but you have to earn it. What did you see in other
+            responses, and why does yours still win?
           </p>
           <textarea
             value={explanation}
             onChange={(e) => setExplanation(e.target.value)}
             rows={4}
-            placeholder="I'm keeping my evidence because it's the only quote that shows what Lena does when nobody is watching, which matters because…"
-            className="mb-3 w-full rounded-lg border border-paper-200 px-3 py-2 text-sm"
+            placeholder="I'm keeping my receipt because it's the only quote that shows what Lena does when nobody is watching, which matters because…"
+            className="field mb-3 text-sm"
           />
-          {error && <p className="mb-3 rounded-lg bg-rose-100 px-3 py-2 text-sm text-rose-900">{error}</p>}
+          {error && (
+            <p className="pop mb-3 rounded-xl border-2 border-alarm-500 bg-alarm-500/10 px-3 py-2 text-sm font-semibold text-alarm-400">
+              {error}
+            </p>
+          )}
           <div className="flex gap-2">
-            <button onClick={() => save(true)} disabled={busy}
-              className="flex-1 rounded-xl bg-ink-950 px-4 py-3 font-semibold text-paper-50 hover:bg-ink-900 disabled:opacity-60">
-              {busy ? "Saving…" : "Save my defense"}
+            <button onClick={() => save(true)} disabled={busy} className="btn btn-dark display flex-1 py-2.5 text-2xl">
+              {busy ? "Filing…" : "File my defense 🛡️"}
             </button>
-            <button onClick={() => setMode("choose")} className="rounded-xl px-3 py-3 text-sm text-ink-500 underline">
+            <button onClick={() => setMode("choose")} className="px-3 text-sm text-smoke-400 underline">
               Back
             </button>
           </div>
@@ -375,32 +400,36 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
 }
 
 // ---------------------------------------------------------------------------
-// Reveal + Reflection
+// Reveal — "The verdict" + Reflection — "Case notes"
 // ---------------------------------------------------------------------------
 
-export function RevealScreen({ state }: { state: PlayState }) {
+export function RevealScreen({ state, noConfetti }: { state: PlayState; noConfetti?: boolean }) {
+  void noConfetti; // confetti is rendered by the shell only during the reveal phase
   const reveal = state.reveal;
-  if (!reveal) return <p className="text-center text-ink-500">Waiting for the reveal…</p>;
+  if (!reveal) return <p className="pt-12 text-center text-smoke-400">Waiting for the verdict…</p>;
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-4 text-center font-serif text-2xl font-bold">How the class thought</h1>
-      <div className="mb-5 grid grid-cols-3 gap-3 text-center">
-        <Stat label="Responses" value={reveal.totalSubmissions} />
-        <Stat label="Peer votes cast" value={reveal.totalVotesCast} />
-        <Stat label="Revisions made" value={reveal.totalRevised} />
+      <h1 className="display mb-5 text-center text-6xl">
+        The <span className="text-gold-400">verdict</span>
+      </h1>
+      <div className="mb-6 grid grid-cols-3 gap-3 text-center">
+        <Stat label="Receipts filed" value={reveal.totalSubmissions} />
+        <Stat label="Jury votes" value={reveal.totalVotesCast} />
+        <Stat label="Appeals + defenses" value={reveal.totalRevised} />
       </div>
 
       {reveal.spotlights.length > 0 && (
-        <section className="mb-5">
-          <h2 className="mb-2 font-serif text-lg font-bold">⭐ Spotlighted thinking</h2>
-          <div className="space-y-3">
+        <section className="mb-6">
+          <h2 className="display mb-3 text-3xl">⭐ Spotlight thinking</h2>
+          <div className="space-y-4">
             {reveal.spotlights.map((s, i) => (
-              <div key={i} className="rounded-xl border-2 border-accent-600 bg-white p-4">
-                <p className="mb-1 text-sm font-semibold">{s.claim}</p>
-                <blockquote className="mb-1 border-l-2 border-accent-600 pl-2 font-serif text-sm italic text-ink-700">
+              <div key={i} className="rise card relative border-2 border-gold-400 p-4 pt-5">
+                <span className="stamp absolute -top-3.5 left-4 bg-night-900 text-sm text-gold-400">Star witness</span>
+                <p className="mb-1 text-sm font-semibold text-smoke-50">{s.claim}</p>
+                <blockquote className="paper my-1.5 px-2.5 py-1.5 font-serif text-sm italic">
                   &ldquo;{s.evidenceText}&rdquo;
                 </blockquote>
-                <p className="text-sm text-ink-700">{s.reasoning}</p>
+                <p className="text-sm text-smoke-300">{s.reasoning}</p>
               </div>
             ))}
           </div>
@@ -409,15 +438,21 @@ export function RevealScreen({ state }: { state: PlayState }) {
 
       {reveal.evidenceClusters.length > 0 && (
         <section>
-          <h2 className="mb-2 font-serif text-lg font-bold">Where the class found evidence</h2>
+          <h2 className="display mb-3 text-3xl">Where the class found receipts</h2>
           <ul className="space-y-2">
             {reveal.evidenceClusters.map((c, i) => (
-              <li key={i} className="rounded-xl border border-paper-200 bg-white p-3">
-                <div className="mb-1 flex items-center gap-2 text-xs text-ink-500">
-                  <span className="rounded-full bg-paper-100 px-2 py-0.5 font-semibold">{c.count} student{c.count === 1 ? "" : "s"}</span>
-                  {c.votes > 0 && <span>{c.votes} peer vote{c.votes === 1 ? "" : "s"}</span>}
+              <li key={i} className="rise card p-3" style={{ animationDelay: `${i * 0.08}s` }}>
+                <div className="mb-1 flex items-center gap-2 text-xs">
+                  <span className="display rounded-md bg-gold-400 px-2 py-0.5 text-base text-night-950">
+                    {c.count}×
+                  </span>
+                  {c.votes > 0 && (
+                    <span className="font-bold text-smoke-400">
+                      {c.votes} jury vote{c.votes === 1 ? "" : "s"}
+                    </span>
+                  )}
                 </div>
-                <p className="font-serif text-sm italic">&ldquo;{c.text}&rdquo;</p>
+                <p className="font-serif text-sm italic text-smoke-300">&ldquo;{c.text}&rdquo;</p>
               </li>
             ))}
           </ul>
@@ -429,9 +464,9 @@ export function RevealScreen({ state }: { state: PlayState }) {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-paper-200 bg-white p-3">
-      <div className="font-serif text-2xl font-bold">{value}</div>
-      <div className="text-xs text-ink-500">{label}</div>
+    <div className="card pop p-3">
+      <div className="display text-4xl text-gold-400">{value}</div>
+      <div className="text-xs font-bold uppercase tracking-wider text-smoke-400">{label}</div>
     </div>
   );
 }
@@ -443,10 +478,9 @@ export function ReflectScreen({ state, refresh }: { state: PlayState; refresh: (
 
   if (state.reflected) {
     return (
-      <div className="mx-auto max-w-md text-center">
-        <div className="mb-3 text-5xl">💭</div>
-        <h1 className="mb-2 font-serif text-2xl font-bold">Reflection saved</h1>
-        <p className="text-ink-700">Great round. Your teacher can see how your thinking changed.</p>
+      <div className="mx-auto max-w-md pt-8 text-center">
+        <span className="stamp pop inline-block border-4 px-4 py-1 text-4xl text-win-400">Notes filed</span>
+        <p className="mt-4 text-smoke-300">Great round. Your teacher can see how your thinking leveled up.</p>
       </div>
     );
   }
@@ -465,8 +499,10 @@ export function ReflectScreen({ state, refresh }: { state: PlayState; refresh: (
 
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="mb-2 text-center font-serif text-2xl font-bold">Exit reflection</h1>
-      <p className="mb-4 text-center text-sm text-ink-500">One honest sentence or two. Pick a starter if you&apos;re stuck:</p>
+      <h1 className="display mb-1 text-center text-5xl">Case notes</h1>
+      <p className="mb-4 text-center text-sm text-smoke-400">
+        One honest sentence or two. Pick a starter if you&apos;re stuck:
+      </p>
       <div className="mb-3 flex flex-wrap justify-center gap-1.5">
         {[
           "My evidence got stronger when…",
@@ -474,8 +510,11 @@ export function ReflectScreen({ state, refresh }: { state: PlayState; refresh: (
           "The other response I read taught me…",
           "I defended my answer because…",
         ].map((starter) => (
-          <button key={starter} onClick={() => setText((t) => (t ? t : starter + " "))}
-            className="rounded-lg border border-paper-200 bg-white px-2.5 py-1 text-xs hover:bg-paper-100">
+          <button
+            key={starter}
+            onClick={() => setText((t) => (t ? t : starter + " "))}
+            className="rounded-lg border-2 border-night-600 px-2.5 py-1 text-xs font-semibold text-smoke-300 hover:border-gold-400 hover:text-gold-400"
+          >
             {starter}
           </button>
         ))}
@@ -484,13 +523,16 @@ export function ReflectScreen({ state, refresh }: { state: PlayState; refresh: (
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={4}
-        className="mb-3 w-full rounded-xl border border-paper-200 bg-white px-4 py-3 text-sm"
+        className="field mb-3 text-sm"
         placeholder="What actually changed in your thinking this round?"
       />
-      {error && <p className="mb-3 rounded-lg bg-rose-100 px-3 py-2 text-sm text-rose-900">{error}</p>}
-      <button onClick={submit} disabled={busy}
-        className="w-full rounded-xl bg-ink-950 px-4 py-3 font-semibold text-paper-50 hover:bg-ink-900 disabled:opacity-60">
-        {busy ? "Saving…" : "Save reflection"}
+      {error && (
+        <p className="pop mb-3 rounded-xl border-2 border-alarm-500 bg-alarm-500/10 px-3 py-2 text-sm font-semibold text-alarm-400">
+          {error}
+        </p>
+      )}
+      <button onClick={submit} disabled={busy} className="btn btn-gold display w-full py-3 text-3xl">
+        {busy ? "Filing…" : "File my case notes 📝"}
       </button>
     </div>
   );

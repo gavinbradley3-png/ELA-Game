@@ -36,14 +36,18 @@ export default async function NewRoundPage({
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-2 font-serif text-3xl font-bold">Launch a live round</h1>
-      <p className="mb-6 text-ink-500">Evidence Battle · target setup time: under 3 minutes.</p>
-      {error && <p className="mb-4 rounded-lg bg-rose-100 px-4 py-3 text-sm text-rose-900">{error}</p>}
+      <h1 className="display mb-1 text-5xl">Launch a live round</h1>
+      <p className="mb-6 text-smoke-400">Evidence Battle · target setup time: under 3 minutes.</p>
+      {error && (
+        <p className="mb-4 rounded-xl border-2 border-alarm-500 bg-alarm-500/10 px-4 py-3 text-sm font-semibold text-alarm-400">
+          {error}
+        </p>
+      )}
       {missing.length > 0 ? (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm">
+        <div className="rounded-xl border-2 border-gold-400 bg-gold-400/10 p-5 text-sm text-smoke-300">
           You still need {missing.join(", ")}.{" "}
-          <Link href="/teacher/classes" className="underline">Classes</Link> ·{" "}
-          <Link href="/teacher/passages" className="underline">Passages</Link>
+          <Link href="/teacher/classes" className="text-gold-400 underline">Classes</Link> ·{" "}
+          <Link href="/teacher/passages" className="text-gold-400 underline">Passages</Link>
         </div>
       ) : (
         <RoundSetupForm
