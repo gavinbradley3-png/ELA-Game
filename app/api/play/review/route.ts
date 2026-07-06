@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db, peerComparisons } from "@/lib/db";
-import { requirePlay } from "@/lib/play";
+import { requirePlay, readJson } from "@/lib/play";
 import { clean, lengthError } from "@/lib/validate";
 import { PEER_CRITERIA } from "@/lib/tags";
 
 export async function POST(req: Request) {
-  let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-  }
+  const body = await readJson(req);
+  if (!body) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   const ctx = await requirePlay(String(body.roundId ?? ""), "review");
   if (!ctx.ok) return NextResponse.json({ error: ctx.error }, { status: ctx.status });
   const { round, session } = ctx;

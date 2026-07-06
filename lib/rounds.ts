@@ -38,23 +38,40 @@ export async function getTeacherRound(roundId: string, teacherId: string): Promi
 // Phase transitions (server-authoritative, teacher-driven — DESIGN.md §31)
 // ---------------------------------------------------------------------------
 
-export async function advanceRound(round: GameRound): Promise<{ phase: string } | { error: string }> {
+export async function advanceRound(
+  round: GameRound,
+  expectedPhase?: string,
+): Promise<{ phase: string } | { error: string }> {
   if (round.pausedFromPhase) return { error: "Round is paused. Resume before advancing." };
+  // Idempotency guard: a double-clicked Next button (or two teacher tabs)
+  // must not skip a phase. The client says which phase it thinks it's leaving.
+  if (expectedPhase && round.phase !== expectedPhase) {
+    return { error: "The round already moved on — you're up to date." };
+  }
   const next = nextPhase(round.phase);
   if (!next) return { error: "Round is already complete." };
-  return enterPhase(round, next);
+  // Compare-and-swap on the current phase: of two concurrent advances,
+  // exactly one wins regardless of request interleaving.
+  return enterPhase(round, next, round.phase);
 }
 
-export async function enterPhase(round: GameRound, phase: string): Promise<{ phase: string } | { error: string }> {
+export async function enterPhase(
+  round: GameRound,
+  phase: string,
+  onlyIfCurrentPhase?: string,
+): Promise<{ phase: string } | { error: string }> {
   const settings = parseSettings(round);
 
   if (phase === "peer_review") {
+    // Idempotent and transactional — safe to run before the phase CAS.
     const generated = await generateComparisons(round, settings);
     if ("error" in generated) return generated;
   }
 
   const timerSeconds = phaseTimerSeconds(phase, settings);
-  await db
+  const conditions = [eq(gameRounds.id, round.id)];
+  if (onlyIfCurrentPhase) conditions.push(eq(gameRounds.phase, onlyIfCurrentPhase));
+  const result = await db
     .update(gameRounds)
     .set({
       phase,
@@ -66,7 +83,10 @@ export async function enterPhase(round: GameRound, phase: string): Promise<{ pha
       submissionsLocked: phase === "submitting" ? 0 : round.submissionsLocked,
       endedAt: phase === "complete" ? Date.now() : round.endedAt,
     })
-    .where(eq(gameRounds.id, round.id));
+    .where(and(...conditions));
+  if (onlyIfCurrentPhase && result.changes === 0) {
+    return { error: "The round already moved on — you're up to date." };
+  }
   return { phase };
 }
 
@@ -103,6 +123,9 @@ export async function adjustTimer(round: GameRound, deltaSeconds: number): Promi
       .where(eq(gameRounds.id, round.id));
     return;
   }
+  // With no timer running, +N starts one; −N is a no-op instead of creating
+  // an instantly-expired timer.
+  if (round.phaseEndsAt == null && deltaSeconds <= 0) return;
   const base = round.phaseEndsAt ?? Date.now();
   await db
     .update(gameRounds)
@@ -125,60 +148,68 @@ export async function generateComparisons(
   round: GameRound,
   settings: RoundSettings,
 ): Promise<{ ok: true } | { error: string }> {
-  const existing = await db
-    .select({ id: peerComparisons.id })
-    .from(peerComparisons)
-    .where(eq(peerComparisons.roundId, round.id))
-    .limit(1);
-  if (existing.length > 0) return { ok: true }; // already generated (re-entry after pause etc.)
+  // The existence check, pair assignment, and insert run inside one
+  // synchronous SQLite transaction so two concurrent "advance to vote"
+  // requests can never double-assign comparisons.
+  return db.transaction((tx) => {
+    const existing = tx
+      .select({ id: peerComparisons.id })
+      .from(peerComparisons)
+      .where(eq(peerComparisons.roundId, round.id))
+      .limit(1)
+      .all();
+    if (existing.length > 0) return { ok: true } as const; // already generated
 
-  const subs = await db
-    .select()
-    .from(submissions)
-    .where(and(eq(submissions.roundId, round.id), eq(submissions.status, "submitted")));
-  if (subs.length < 3) {
-    return {
-      error: `Peer review needs at least 3 submissions (you have ${subs.length}). Wait for more submissions or skip ahead.`,
-    };
-  }
-  const students = await db
-    .select()
-    .from(studentSessions)
-    .where(and(eq(studentSessions.roundId, round.id), eq(studentSessions.status, "active")));
-
-  const shownCount = new Map<string, number>(subs.map((s) => [s.id, 0]));
-  const rows: (typeof peerComparisons.$inferInsert)[] = [];
-
-  for (const student of students) {
-    const eligible = subs.filter((s) => s.studentSessionId !== student.id);
-    if (eligible.length < 2) continue;
-    const seenPairs = new Set<string>();
-    for (let k = 0; k < settings.comparisonsPerStudent; k++) {
-      // Pick the two least-shown eligible submissions, shuffled for tie-breaks.
-      const ranked = shuffle(eligible).sort(
-        (a, b) => (shownCount.get(a.id) ?? 0) - (shownCount.get(b.id) ?? 0),
-      );
-      let a = ranked[0];
-      let b = ranked.find((s) => s.id !== a.id && !seenPairs.has(pairKey(a.id, s.id)));
-      if (!b) b = ranked.find((s) => s.id !== a.id);
-      if (!b) break;
-      seenPairs.add(pairKey(a.id, b.id));
-      shownCount.set(a.id, (shownCount.get(a.id) ?? 0) + 1);
-      shownCount.set(b.id, (shownCount.get(b.id) ?? 0) + 1);
-      if (Math.random() < 0.5) [a, b] = [b, a];
-      rows.push({
-        id: newId(),
-        roundId: round.id,
-        reviewerSessionId: student.id,
-        submissionAId: a.id,
-        submissionBId: b.id,
-        createdAt: Date.now(),
-      });
+    const subs = tx
+      .select()
+      .from(submissions)
+      .where(and(eq(submissions.roundId, round.id), eq(submissions.status, "submitted")))
+      .all();
+    if (subs.length < 3) {
+      return {
+        error: `Peer review needs at least 3 submissions (you have ${subs.length}). Wait for more submissions or skip ahead.`,
+      } as const;
     }
-  }
-  if (rows.length === 0) return { error: "Could not assign any peer comparisons." };
-  await db.insert(peerComparisons).values(rows);
-  return { ok: true };
+    const students = tx
+      .select()
+      .from(studentSessions)
+      .where(and(eq(studentSessions.roundId, round.id), eq(studentSessions.status, "active")))
+      .all();
+
+    const shownCount = new Map<string, number>(subs.map((s) => [s.id, 0]));
+    const rows: (typeof peerComparisons.$inferInsert)[] = [];
+
+    for (const student of students) {
+      const eligible = subs.filter((s) => s.studentSessionId !== student.id);
+      if (eligible.length < 2) continue;
+      const seenPairs = new Set<string>();
+      for (let k = 0; k < settings.comparisonsPerStudent; k++) {
+        // Pick the two least-shown eligible submissions, shuffled for tie-breaks.
+        const ranked = shuffle(eligible).sort(
+          (a, b) => (shownCount.get(a.id) ?? 0) - (shownCount.get(b.id) ?? 0),
+        );
+        let a = ranked[0];
+        let b = ranked.find((s) => s.id !== a.id && !seenPairs.has(pairKey(a.id, s.id)));
+        // No fresh pair left for this reviewer — stop rather than repeat one.
+        if (!b) break;
+        seenPairs.add(pairKey(a.id, b.id));
+        shownCount.set(a.id, (shownCount.get(a.id) ?? 0) + 1);
+        shownCount.set(b.id, (shownCount.get(b.id) ?? 0) + 1);
+        if (Math.random() < 0.5) [a, b] = [b, a];
+        rows.push({
+          id: newId(),
+          roundId: round.id,
+          reviewerSessionId: student.id,
+          submissionAId: a.id,
+          submissionBId: b.id,
+          createdAt: Date.now(),
+        });
+      }
+    }
+    if (rows.length === 0) return { error: "Could not assign any peer comparisons." } as const;
+    tx.insert(peerComparisons).values(rows).run();
+    return { ok: true } as const;
+  });
 }
 
 function pairKey(a: string, b: string): string {

@@ -11,6 +11,7 @@ import {
   adjustTimer,
 } from "@/lib/rounds";
 import { PHASE_ORDER } from "@/lib/phases";
+import { readJson } from "@/lib/play";
 
 /**
  * Single teacher control endpoint for live round actions (DESIGN.md §11).
@@ -23,17 +24,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const round = await getTeacherRound(id, user.id);
   if (!round) return NextResponse.json({ error: "Round not found" }, { status: 404 });
 
-  let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const body = await readJson(req);
+  if (!body) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   const type = String(body.type ?? "");
 
   switch (type) {
     case "advance": {
-      const result = await advanceRound(round);
+      const result = await advanceRound(round, body.fromPhase ? String(body.fromPhase) : undefined);
       if ("error" in result) return NextResponse.json(result, { status: 409 });
       return NextResponse.json(result);
     }

@@ -5,14 +5,17 @@ import { newId, newToken, normalizeJoinCode } from "@/lib/ids";
 import { getRoundByCode, getStudentSession, setStudentCookie } from "@/lib/student";
 import { clean, nicknameError } from "@/lib/validate";
 import { isActivePhase } from "@/lib/phases";
+import { readJson } from "@/lib/play";
+import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 export async function POST(req: Request) {
-  let body: { code?: string; name?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  // A whole school can sit behind one NAT IP, so this must never touch
+  // legitimate classes (even two joining back-to-back) — only scripted floods.
+  if (!rateLimit(`join:${clientIp(req)}`, 240, 60_000)) {
+    return NextResponse.json({ error: "Too many join attempts. Wait a minute." }, { status: 429 });
   }
+  const body = await readJson(req);
+  if (!body) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   const code = normalizeJoinCode(String(body.code ?? ""));
   const name = clean(body.name);
 

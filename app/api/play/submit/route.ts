@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db, submissions, passages } from "@/lib/db";
-import { requirePlay } from "@/lib/play";
+import { requirePlay, readJson } from "@/lib/play";
 import { newId } from "@/lib/ids";
 import { clean, lengthError, restatesEvidence } from "@/lib/validate";
 
 export async function POST(req: Request) {
-  let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-  }
+  const body = await readJson(req);
+  if (!body) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   const ctx = await requirePlay(String(body.roundId ?? ""), "submit");
   if (!ctx.ok) return NextResponse.json({ error: ctx.error }, { status: ctx.status });
   const { round, session } = ctx;
@@ -55,16 +51,26 @@ export async function POST(req: Request) {
     );
   }
 
-  // Upsert: students can improve their answer until the teacher locks or advances.
-  const [existing] = await db
-    .select()
-    .from(submissions)
-    .where(and(eq(submissions.roundId, round.id), eq(submissions.studentSessionId, session.id)))
-    .limit(1);
-  if (existing) {
-    await db
-      .update(submissions)
-      .set({
+  // Atomic upsert: students can improve their answer until the teacher locks
+  // or advances, and a double-tapped submit can never create two rows.
+  await db
+    .insert(submissions)
+    .values({
+      id: newId(),
+      roundId: round.id,
+      studentSessionId: session.id,
+      claim,
+      reasoning,
+      confidence,
+      evidenceStart: start,
+      evidenceEnd: end,
+      evidenceText,
+      status: "submitted",
+      submittedAt: Date.now(),
+    })
+    .onConflictDoUpdate({
+      target: submissions.studentSessionId,
+      set: {
         claim,
         reasoning,
         confidence,
@@ -73,23 +79,7 @@ export async function POST(req: Request) {
         evidenceText,
         status: "submitted",
         submittedAt: Date.now(),
-      })
-      .where(eq(submissions.id, existing.id));
-    return NextResponse.json({ ok: true, id: existing.id });
-  }
-  const id = newId();
-  await db.insert(submissions).values({
-    id,
-    roundId: round.id,
-    studentSessionId: session.id,
-    claim,
-    reasoning,
-    confidence,
-    evidenceStart: start,
-    evidenceEnd: end,
-    evidenceText,
-    status: "submitted",
-    submittedAt: Date.now(),
-  });
-  return NextResponse.json({ ok: true, id });
+      },
+    });
+  return NextResponse.json({ ok: true });
 }

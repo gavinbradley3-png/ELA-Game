@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, notInArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db, classes, passages, prompts, gameRounds } from "@/lib/db";
@@ -8,6 +8,23 @@ import { requireTeacher } from "@/lib/auth";
 import { newId, newJoinCode } from "@/lib/ids";
 import { clean } from "@/lib/validate";
 import { DEFAULT_SETTINGS, type RoundSettings } from "@/lib/phases";
+
+/**
+ * Annotation and evidence offsets are anchored to the exact passage text, so
+ * changing a passage (or deleting a prompt) mid-round would corrupt every
+ * student's work. Content used by a live round is frozen until it ends.
+ */
+async function hasActiveRound(where: { passageId?: string; promptId?: string }): Promise<boolean> {
+  const conditions = [notInArray(gameRounds.phase, ["complete", "cancelled"])];
+  if (where.passageId) conditions.push(eq(gameRounds.passageId, where.passageId));
+  if (where.promptId) conditions.push(eq(gameRounds.promptId, where.promptId));
+  const rows = await db
+    .select({ id: gameRounds.id })
+    .from(gameRounds)
+    .where(and(...conditions))
+    .limit(1);
+  return rows.length > 0;
+}
 
 export async function createClass(formData: FormData) {
   const teacher = await requireTeacher();
@@ -73,6 +90,8 @@ export async function updatePassage(formData: FormData) {
   const fields = passageFields(formData);
   if (fields.title.length < 1 || fields.text.length < 100)
     redirect(`/teacher/passages/${id}?error=Title and passage text (100+ characters) are required.`);
+  if (await hasActiveRound({ passageId: id }))
+    redirect(`/teacher/passages/${id}?error=This passage is being used by a live round. End the round before editing it.`);
   await db
     .update(passages)
     .set({ ...fields, updatedAt: Date.now() })
@@ -130,6 +149,8 @@ export async function deletePrompt(formData: FormData) {
     .where(and(eq(passages.id, passageId), eq(passages.teacherId, teacher.id)))
     .limit(1);
   if (owned.length > 0) {
+    if (await hasActiveRound({ promptId: id }))
+      redirect(`/teacher/passages/${passageId}?error=That prompt is being used by a live round. End the round before deleting it.`);
     await db.delete(prompts).where(and(eq(prompts.id, id), eq(prompts.passageId, passageId)));
   }
   revalidatePath(`/teacher/passages/${passageId}`);

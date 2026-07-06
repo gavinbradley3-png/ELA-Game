@@ -45,10 +45,14 @@ export function PlayClient({ roundId }: { roundId: string }) {
   const [splash, setSplash] = useState<{ text: string; sub: string; key: string } | null>(null);
   const prevPhase = useRef<string | null>(null);
 
+  const terminal = useRef(false);
+  const lastPoll = useRef(0);
+
   const refresh = useCallback(async () => {
     try {
       const res = await fetch(`/api/play/state?roundId=${encodeURIComponent(roundId)}`, { cache: "no-store" });
-      if (res.status === 401) {
+      if (res.status === 401 || res.status === 404) {
+        // Removed, expired, or the round id is bogus — don't poll forever.
         setGone(true);
         return;
       }
@@ -59,6 +63,7 @@ export function PlayClient({ roundId }: { roundId: string }) {
         setSplash({ ...SPLASH[phase], key: `${phase}-${Date.now()}` });
       }
       prevPhase.current = phase;
+      terminal.current = phase === "complete" || phase === "cancelled";
       setState(next);
       setOffline(false);
     } catch {
@@ -68,7 +73,15 @@ export function PlayClient({ roundId }: { roundId: string }) {
 
   useEffect(() => {
     refresh();
-    const t = setInterval(refresh, POLL_MS);
+    // Once the round is over there's nothing new to fetch — drop to a slow
+    // heartbeat so 30 abandoned tabs don't keep hammering the server.
+    const t = setInterval(() => {
+      const wait = terminal.current ? 20000 : POLL_MS;
+      if (Date.now() - lastPoll.current >= wait) {
+        lastPoll.current = Date.now();
+        refresh();
+      }
+    }, POLL_MS);
     return () => clearInterval(t);
   }, [refresh]);
 

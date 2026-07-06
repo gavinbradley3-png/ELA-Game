@@ -108,7 +108,7 @@ export function ControlPanel({ roundId }: { roundId: string }) {
                     </button>
                   )}
                   {nextLabel && (
-                    <button onClick={() => act({ type: "advance" })} disabled={busy || round.paused}
+                    <button onClick={() => act({ type: "advance", fromPhase: phase })} disabled={busy || round.paused}
                       className="btn btn-primary display px-6 py-3 text-2xl">
                       Next: {nextLabel} →
                     </button>

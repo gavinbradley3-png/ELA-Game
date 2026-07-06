@@ -183,7 +183,8 @@ export function ScrollProgress() {
     const onScroll = () => {
       const el = document.documentElement;
       const max = el.scrollHeight - el.clientHeight;
-      setPct(max > 0 ? Math.min(100, Math.round((el.scrollTop / max) * 100)) : 0);
+      // Nothing to scroll means the whole passage is visible — that's 100%.
+      setPct(max > 4 ? Math.min(100, Math.round((el.scrollTop / max) * 100)) : 100);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });

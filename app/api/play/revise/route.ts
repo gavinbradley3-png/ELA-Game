@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db, submissions, revisions, passages } from "@/lib/db";
-import { requirePlay } from "@/lib/play";
+import { requirePlay, readJson } from "@/lib/play";
 import { newId } from "@/lib/ids";
 import { clean, lengthError, meaningfullyDifferent } from "@/lib/validate";
 
 export async function POST(req: Request) {
-  let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-  }
+  const body = await readJson(req);
+  if (!body) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   const ctx = await requirePlay(String(body.roundId ?? ""), "revise");
   if (!ctx.ok) return NextResponse.json({ error: ctx.error }, { status: ctx.status });
   const { round, session } = ctx;
@@ -85,15 +81,24 @@ export async function POST(req: Request) {
     }
   }
 
-  const [existing] = await db
-    .select()
-    .from(revisions)
-    .where(eq(revisions.submissionId, original.id))
-    .limit(1);
-  if (existing) {
-    await db
-      .update(revisions)
-      .set({
+  // Atomic upsert keyed on the submission — one revision per receipt.
+  await db
+    .insert(revisions)
+    .values({
+      id: newId(),
+      submissionId: original.id,
+      revisedClaim,
+      revisedReasoning,
+      revisedEvidenceStart: start,
+      revisedEvidenceEnd: end,
+      revisedEvidenceText: evidenceText,
+      changeExplanation,
+      keptOriginal: keepOriginal ? 1 : 0,
+      submittedAt: Date.now(),
+    })
+    .onConflictDoUpdate({
+      target: revisions.submissionId,
+      set: {
         revisedClaim,
         revisedReasoning,
         revisedEvidenceStart: start,
@@ -102,21 +107,7 @@ export async function POST(req: Request) {
         changeExplanation,
         keptOriginal: keepOriginal ? 1 : 0,
         submittedAt: Date.now(),
-      })
-      .where(eq(revisions.id, existing.id));
-    return NextResponse.json({ ok: true });
-  }
-  await db.insert(revisions).values({
-    id: newId(),
-    submissionId: original.id,
-    revisedClaim,
-    revisedReasoning,
-    revisedEvidenceStart: start,
-    revisedEvidenceEnd: end,
-    revisedEvidenceText: evidenceText,
-    changeExplanation,
-    keptOriginal: keepOriginal ? 1 : 0,
-    submittedAt: Date.now(),
-  });
+      },
+    });
   return NextResponse.json({ ok: true });
 }

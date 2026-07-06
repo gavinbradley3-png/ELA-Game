@@ -73,6 +73,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 function csvEscape(value: string): string {
-  if (/[",\r\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
-  return value;
+  // Guard against spreadsheet formula injection: student text starting with
+  // =, +, -, or @ would otherwise execute when the CSV is opened in Excel.
+  let v = value;
+  if (/^[=+\-@\t\r]/.test(v)) v = `'${v}`;
+  if (/[",\r\n]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
+  return v;
 }

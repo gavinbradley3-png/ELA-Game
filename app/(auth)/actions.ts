@@ -3,12 +3,25 @@
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { db, users } from "@/lib/db";
 import { setSessionCookie, clearSessionCookie } from "@/lib/auth";
 import { newId } from "@/lib/ids";
 import { clean } from "@/lib/validate";
+import { rateLimit } from "@/lib/ratelimit";
+
+// Constant-cost comparison target for unknown emails, so login timing doesn't
+// reveal whether an account exists.
+const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", 10);
+
+async function authRateLimited(bucket: string): Promise<boolean> {
+  const h = await headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0].trim() ?? h.get("x-real-ip") ?? "unknown";
+  return !rateLimit(`${bucket}:${ip}`, 10, 60_000);
+}
 
 export async function signup(formData: FormData) {
+  if (await authRateLimited("signup")) redirect("/signup?error=Too many attempts. Wait a minute and try again.");
   const name = clean(formData.get("name"));
   const email = clean(formData.get("email")).toLowerCase();
   const password = String(formData.get("password") ?? "");
@@ -33,12 +46,14 @@ export async function signup(formData: FormData) {
 }
 
 export async function login(formData: FormData) {
+  if (await authRateLimited("login")) redirect("/login?error=Too many attempts. Wait a minute and try again.");
   const email = clean(formData.get("email")).toLowerCase();
   const password = String(formData.get("password") ?? "");
 
   const rows = await db.select().from(users).where(eq(users.email, email)).limit(1);
   const user = rows[0];
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+  const valid = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
+  if (!user || !valid) {
     redirect("/login?error=Wrong email or password.");
   }
   await setSessionCookie(user.id);

@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, users, type User } from "@/lib/db";
 
@@ -65,15 +66,12 @@ export async function getSessionUser(): Promise<User | null> {
   return rows[0] ?? null;
 }
 
+/**
+ * For pages and server actions: an expired session sends the teacher back to
+ * the login screen instead of surfacing an error page mid-lesson.
+ */
 export async function requireTeacher(): Promise<User> {
   const user = await getSessionUser();
-  if (!user) throw new AuthError();
+  if (!user) redirect("/login");
   return user;
-}
-
-export class AuthError extends Error {
-  constructor() {
-    super("Not authenticated");
-    this.name = "AuthError";
-  }
 }

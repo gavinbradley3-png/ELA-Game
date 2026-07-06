@@ -152,6 +152,22 @@ function migrate(sqlite: Database.Database) {
     );
     CREATE INDEX IF NOT EXISTS idx_reflections_round ON reflections(round_id);
   `);
+
+  // One reflection per student per round — enforced at the database level so
+  // concurrent submits can't double-insert. Dedupe first for older databases.
+  try {
+    sqlite.exec(
+      "CREATE UNIQUE INDEX IF NOT EXISTS uq_reflections_student ON reflections(round_id, student_session_id)",
+    );
+  } catch {
+    sqlite.exec(`
+      DELETE FROM reflections WHERE id NOT IN (
+        SELECT id FROM reflections GROUP BY round_id, student_session_id
+        HAVING submitted_at = MAX(submitted_at)
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_reflections_student ON reflections(round_id, student_session_id);
+    `);
+  }
 }
 
 export const db = globalForDb.__receiptsDb ?? createDb();
