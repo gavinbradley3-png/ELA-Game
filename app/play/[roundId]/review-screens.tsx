@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PassageView } from "@/components/PassageView";
-import { ClassMeter } from "@/components/juice";
+import { ClassMeter, CountUp, PhaseSplash } from "@/components/juice";
 import { PEER_CRITERIA } from "@/lib/tags";
 import { LIMITS } from "@/lib/validate";
 import { postJson, type PlayState, type PlayComparison, type AnonSubmission } from "./types";
@@ -15,6 +15,7 @@ export function ReviewScreen({ state, refresh }: { state: PlayState; refresh: ()
   const comparisons = state.comparisons ?? [];
   const current = comparisons.find((c) => !c.completed);
   const doneCount = comparisons.filter((c) => c.completed).length;
+  const [gavelKey, setGavelKey] = useState(0);
 
   if (comparisons.length === 0) {
     return (
@@ -26,10 +27,13 @@ export function ReviewScreen({ state, refresh }: { state: PlayState; refresh: ()
   if (!current) {
     return (
       <div className="mx-auto max-w-md pt-8 text-center">
+        {gavelKey > 0 && (
+          <PhaseSplash text="Verdict locked" emoji="🔨" splashKey={`gavel-${gavelKey}`} tone="gold" durationMs={1100} />
+        )}
         <span className="stamp pop inline-block border-4 px-4 py-1 text-4xl text-win-400">Jury duty done</span>
         <p className="mt-4 text-smoke-300">
-          You judged {doneCount} matchup{doneCount === 1 ? "" : "s"}. Next: use what you saw to make your own
-          answer stronger.
+          You cooked. 🫡 {doneCount} matchup{doneCount === 1 ? "" : "s"} judged. Next: use what you saw to
+          give your own answer a glow-up.
         </p>
         <div className="mx-auto mt-6 max-w-xs">
           <ClassMeter label="Class votes in" value={state.pulse.reviewsDone} total={state.pulse.reviewsAssigned} />
@@ -38,14 +42,20 @@ export function ReviewScreen({ state, refresh }: { state: PlayState; refresh: ()
     );
   }
   return (
-    <ComparisonCard
-      key={current.id}
-      comparison={current}
-      index={doneCount + 1}
-      total={comparisons.length}
-      state={state}
-      refresh={refresh}
-    />
+    <>
+      {gavelKey > 0 && (
+        <PhaseSplash text="Verdict locked" emoji="🔨" splashKey={`gavel-${gavelKey}`} tone="gold" durationMs={1100} />
+      )}
+      <ComparisonCard
+        key={current.id}
+        comparison={current}
+        index={doneCount + 1}
+        total={comparisons.length}
+        state={state}
+        refresh={refresh}
+        onLocked={() => setGavelKey((k) => k + 1)}
+      />
+    </>
   );
 }
 
@@ -55,12 +65,14 @@ function ComparisonCard({
   total,
   state,
   refresh,
+  onLocked,
 }: {
   comparison: PlayComparison;
   index: number;
   total: number;
   state: PlayState;
   refresh: () => Promise<void>;
+  onLocked: () => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<string[]>([]);
@@ -87,6 +99,7 @@ function ComparisonCard({
       setError(data.error ?? "Couldn't save your vote.");
       return;
     }
+    onLocked();
     await refresh();
   }
 
@@ -104,12 +117,15 @@ function ComparisonCard({
         )}
       </div>
 
-      <div className="mb-5 grid gap-4 md:grid-cols-2">
+      <div className="relative mb-5 grid gap-4 md:grid-cols-2">
+        <span className="vs-badge display pointer-events-none absolute left-1/2 top-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 rounded-xl border-4 border-alarm-500 bg-night-950 px-3 py-1 text-4xl text-alarm-400 md:block">
+          VS
+        </span>
         {([["A", comparison.a], ["B", comparison.b]] as [string, AnonSubmission][]).map(([label, sub]) => (
           <button
             key={sub.id}
             onClick={() => setSelected(sub.id)}
-            className={`rise card relative p-4 pt-5 text-left transition ${
+            className={`${label === "A" ? "slide-in-l" : "slide-in-r"} card relative p-4 pt-5 text-left transition ${
               selected === sub.id
                 ? "border-4 border-gold-400 shadow-[0_0_30px_-8px_var(--color-gold-400)]"
                 : "border-night-700 hover:border-smoke-400"
@@ -209,6 +225,8 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
   const [explanation, setExplanation] = useState(rev?.changeExplanation ?? "");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [savedKey, setSavedKey] = useState(0);
+  const [lastSaveKept, setLastSaveKept] = useState(false);
 
   if (!sub) {
     return (
@@ -236,6 +254,8 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
       setError(data.error ?? "Couldn't save your revision.");
       return;
     }
+    setLastSaveKept(keepOriginal);
+    setSavedKey((k) => k + 1);
     await refresh();
     setMode("choose");
   }
@@ -244,14 +264,26 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
 
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="display mb-1 text-center text-5xl">Second draft beats first draft</h1>
+      {savedKey > 0 && (
+        <PhaseSplash
+          text={lastSaveKept ? "Standing on business" : "Glow-up filed"}
+          emoji={lastSaveKept ? "🛡️" : "✨"}
+          splashKey={`rev-${savedKey}`}
+          tone="win"
+          durationMs={1200}
+        />
+      )}
+      <h1 className="display mb-1 text-center text-5xl">
+        Glow-up time <span className="text-gold-400">✨</span>
+      </h1>
       <p className="mb-5 text-center text-sm text-smoke-400">
-        You just judged other detectives. Now upgrade your answer — or defend it like a pro.
+        Second draft beats first draft. You just judged other detectives — now upgrade your answer, or
+        stand on business and defend it.
       </p>
 
       {rev && (
         <p className="pop mx-auto mb-4 max-w-2xl rounded-xl border-2 border-win-400 bg-win-400/10 px-4 py-2 text-center text-sm font-bold text-win-400">
-          ✓ {rev.keptOriginal ? "Defense filed" : "Appeal filed"}. You can still change it until time&apos;s up.
+          ✓ {rev.keptOriginal ? "Defense filed 🛡️" : "Glow-up filed ✨"}. You can still change it until time&apos;s up.
         </p>
       )}
 
@@ -283,7 +315,8 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
                         : "border-night-600 bg-night-800 text-smoke-300"
                     }`}
                   >
-                    {j.pickedMine ? "✓ Picked yours: " : "✗ Picked the other: "}
+                    <span className="display mr-1 text-sm">{j.pickedMine ? "W" : "L"}</span>
+                    {j.pickedMine ? "— picked yours: " : "— picked the other: "}
                     {j.text}
                   </li>
                 ))}
@@ -300,12 +333,12 @@ export function ReviseScreen({ state, refresh }: { state: PlayState; refresh: ()
       {mode === "choose" && (
         <div className="mx-auto flex max-w-2xl flex-col gap-3 sm:flex-row">
           <button onClick={() => setMode("revise")} className="btn btn-gold flex-1 flex-col py-4">
-            <span className="display text-3xl">✏️ File an appeal</span>
+            <span className="display text-3xl">✨ Give it a glow-up</span>
             <span className="text-xs font-semibold opacity-80">Upgrade your evidence, claim, or reasoning</span>
           </button>
           <button onClick={() => setMode("defend")} className="btn btn-dark flex-1 flex-col py-4">
-            <span className="display text-3xl">🛡️ Defend my original</span>
-            <span className="text-xs font-semibold text-smoke-400">Explain why it still holds up</span>
+            <span className="display text-3xl">🛡️ Stand on business</span>
+            <span className="text-xs font-semibold text-smoke-400">Defend your original — explain why it holds up</span>
           </button>
         </div>
       )}
@@ -415,7 +448,7 @@ export function RevealScreen({ state, noConfetti }: { state: PlayState; noConfet
       <div className="mb-6 grid grid-cols-3 gap-3 text-center">
         <Stat label="Receipts filed" value={reveal.totalSubmissions} />
         <Stat label="Jury votes" value={reveal.totalVotesCast} />
-        <Stat label="Appeals + defenses" value={reveal.totalRevised} />
+        <Stat label="Glow-ups + defenses" value={reveal.totalRevised} />
       </div>
 
       {reveal.spotlights.length > 0 && (
@@ -423,7 +456,7 @@ export function RevealScreen({ state, noConfetti }: { state: PlayState; noConfet
           <h2 className="display mb-3 text-3xl">⭐ Spotlight thinking</h2>
           <div className="space-y-4">
             {reveal.spotlights.map((s, i) => (
-              <div key={i} className="rise card relative border-2 border-gold-400 p-4 pt-5">
+              <div key={i} className="rise glow-pulse card relative border-2 border-gold-400 p-4 pt-5">
                 <span className="stamp absolute -top-3.5 left-4 bg-night-900 text-sm text-gold-400">Star witness</span>
                 <p className="mb-1 text-sm font-semibold text-smoke-50">{s.claim}</p>
                 <blockquote className="paper my-1.5 px-2.5 py-1.5 font-serif text-sm italic">
@@ -465,7 +498,9 @@ export function RevealScreen({ state, noConfetti }: { state: PlayState; noConfet
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="card pop p-3">
-      <div className="display text-4xl text-gold-400">{value}</div>
+      <div className="display text-4xl text-gold-400">
+        <CountUp value={value} />
+      </div>
       <div className="text-xs font-bold uppercase tracking-wider text-smoke-400">{label}</div>
     </div>
   );
@@ -505,10 +540,11 @@ export function ReflectScreen({ state, refresh }: { state: PlayState; refresh: (
       </p>
       <div className="mb-3 flex flex-wrap justify-center gap-1.5">
         {[
-          "My evidence got stronger when…",
-          "I changed my claim because…",
-          "The other response I read taught me…",
-          "I defended my answer because…",
+          "Real talk, my evidence was mid until…",
+          "I got cooked in jury duty because…",
+          "I stood on business because…",
+          "My glow-up moment was…",
+          "The response I judged taught me…",
         ].map((starter) => (
           <button
             key={starter}

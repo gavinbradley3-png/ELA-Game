@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { PassageView } from "@/components/PassageView";
-import { ClassMeter } from "@/components/juice";
-import { ANNOTATION_TAGS, TAG_BY_ID, CONFIDENCE_LABELS } from "@/lib/tags";
+import { ClassMeter, FlyToast, PhaseSplash } from "@/components/juice";
+import { ANNOTATION_TAGS, TAG_BY_ID } from "@/lib/tags";
 import { LIMITS } from "@/lib/validate";
 import { postJson, type PlayState } from "./types";
 import { CaseFileHeader, VocabNotes } from "./play-client";
@@ -16,6 +16,7 @@ export function AnnotateScreen({ state, refresh }: { state: PlayState; refresh: 
   const [pending, setPending] = useState<{ start: number; end: number; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [clue, setClue] = useState<{ key: number; text: string } | null>(null);
   if (!state.passage) return null;
 
   const remaining = state.round.settings.maxAnnotations - state.annotations.length;
@@ -37,6 +38,10 @@ export function AnnotateScreen({ state, refresh }: { state: PlayState; refresh: 
       return;
     }
     setPending(null);
+    setClue((c) => ({
+      key: (c?.key ?? 0) + 1,
+      text: `+1 CLUE 🔍 (${state.annotations.length + 1} on the board)`,
+    }));
     window.getSelection()?.removeAllRanges();
     await refresh();
   }
@@ -48,6 +53,7 @@ export function AnnotateScreen({ state, refresh }: { state: PlayState; refresh: 
 
   return (
     <div className="mx-auto max-w-3xl">
+      {clue && <FlyToast text={clue.text} toastKey={clue.key} />}
       <div className="mb-1 flex items-start justify-between gap-3">
         <CaseFileHeader title={state.passage.title} />
         <span
@@ -131,6 +137,22 @@ export function AnnotateScreen({ state, refresh }: { state: PlayState; refresh: 
 // Submission phase — "Bring the receipts"
 // ---------------------------------------------------------------------------
 
+const CONFIDENCE_OPTIONS = [
+  { emoji: "😬", label: "Not sure" },
+  { emoji: "🤔", label: "Somewhat" },
+  { emoji: "😎", label: "Confident" },
+  { emoji: "🔥", label: "Locked in" },
+];
+
+/** Meme-flavored feedback on reasoning length — filling the bar = meeting the minimum. */
+function cookStatus(len: number): { label: string; color: string } {
+  if (len === 0) return { label: "Cook something, chef. 🍳", color: "#4c4359" };
+  if (len < LIMITS.reasoning.min * 0.5) return { label: "It's raw. Keep cooking… 🍳", color: "#f0453c" };
+  if (len < LIMITS.reasoning.min) return { label: "Almost there. Keep cooking… 🔥", color: "#ffc800" };
+  if (len < 220) return { label: "Now we're cooking. 🔥🔥", color: "#3ddc85" };
+  return { label: "Certified banger reasoning. 🚨🔥", color: "#3ddc85" };
+}
+
 export function SubmitScreen({ state, refresh }: { state: PlayState; refresh: () => Promise<void> }) {
   const sub = state.submission;
   const [evidence, setEvidence] = useState<{ start: number; end: number; text: string } | null>(
@@ -142,6 +164,7 @@ export function SubmitScreen({ state, refresh }: { state: PlayState; refresh: ()
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(!!sub);
   const [busy, setBusy] = useState(false);
+  const [filedKey, setFiledKey] = useState(0);
   if (!state.passage || !state.prompt) return null;
 
   const locked = state.round.submissionsLocked;
@@ -173,11 +196,18 @@ export function SubmitScreen({ state, refresh }: { state: PlayState; refresh: ()
       return;
     }
     setSaved(true);
+    setFiledKey((k) => k + 1);
     await refresh();
   }
 
+  const cook = cookStatus(reasoning.length);
+  const cookPct = Math.min(100, Math.round((reasoning.length / LIMITS.reasoning.min) * 100));
+
   return (
     <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
+      {filedKey > 0 && (
+        <PhaseSplash text="Receipt filed" emoji="🧾" splashKey={`filed-${filedKey}`} tone="win" durationMs={1200} />
+      )}
       <div>
         <div className="relative mb-4 rounded-2xl border-4 border-gold-400 bg-night-900 p-4">
           <span className="stamp absolute -top-3.5 left-4 bg-night-900 text-xs text-alarm-400">
@@ -245,28 +275,37 @@ export function SubmitScreen({ state, refresh }: { state: PlayState; refresh: ()
               placeholder="Don't retell the quote — explain what it shows. 'This proves… because…'"
               className="field text-sm"
             />
-            <div className="mt-1 text-right text-xs text-smoke-400">
-              {reasoning.length}/{LIMITS.reasoning.min}+ characters
+            <div className="mt-1.5 flex items-center gap-2">
+              <div className="h-2.5 grow overflow-hidden rounded-full bg-night-950">
+                <div className="cook-bar h-full rounded-full" style={{ width: `${cookPct}%`, backgroundColor: cook.color }} />
+              </div>
+              <span key={cook.label} className="pop shrink-0 text-xs font-bold" style={{ color: cook.color }}>
+                {cook.label}
+              </span>
             </div>
           </label>
 
           <div className="mb-5">
             <StepLabel n={4}>How confident are you?</StepLabel>
             <div className="flex flex-wrap gap-1.5">
-              {[1, 2, 3, 4].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => { setConfidence(n); setSaved(false); }}
-                  disabled={locked}
-                  className={`rounded-lg border-2 px-2.5 py-1.5 text-xs font-bold transition ${
-                    confidence === n
-                      ? "border-gold-400 bg-gold-400 text-night-950"
-                      : "border-night-600 text-smoke-300 hover:border-smoke-400"
-                  }`}
-                >
-                  {CONFIDENCE_LABELS[n]}
-                </button>
-              ))}
+              {CONFIDENCE_OPTIONS.map((opt, i) => {
+                const n = i + 1;
+                return (
+                  <button
+                    key={n}
+                    onClick={() => { setConfidence(n); setSaved(false); }}
+                    disabled={locked}
+                    className={`rounded-lg border-2 px-2.5 py-1.5 text-xs font-bold transition ${
+                      confidence === n
+                        ? "pop border-gold-400 bg-gold-400 text-night-950"
+                        : "border-night-600 text-smoke-300 hover:border-smoke-400"
+                    }`}
+                  >
+                    <span className="mr-1 text-base">{opt.emoji}</span>
+                    {opt.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

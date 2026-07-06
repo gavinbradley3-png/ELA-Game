@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Countdown } from "@/components/Countdown";
 import { PassageView } from "@/components/PassageView";
-import { PhaseSplash, Confetti } from "@/components/juice";
+import { PhaseSplash, Confetti, EmojiRain, FloatingBits, HypeTicker, ScrollProgress } from "@/components/juice";
 import type { PlayState } from "./types";
 import { AnnotateScreen, SubmitScreen } from "./work-screens";
 import { ReviewScreen, ReviseScreen, RevealScreen, ReflectScreen } from "./review-screens";
@@ -178,15 +178,35 @@ function PhaseBody({ state, refresh }: { state: PlayState; refresh: () => Promis
   }
 }
 
+const HYPE_LINES = [
+  "Lock in. 🔒",
+  "Reading is the meta. 📖",
+  "No random quotes. We keep receipts. 🧾",
+  "Cook with evidence, not vibes. 🍳",
+  "Snipers > sprayers. 🎯",
+  "It's giving… textual evidence. ✨",
+  "Your claim needs a lawyer. Be the lawyer. ⚖️",
+  "Skimming is a crime in this jurisdiction. 🚔",
+  "Second drafts are a glow-up, not an L. 💅",
+  "Receipts or it didn't happen. 🫡",
+];
+
 function LobbyScreen({ state }: { state: PlayState }) {
   return (
-    <div className="mx-auto max-w-md pt-4 text-center">
-      <div className="pop mb-2 text-7xl">🕵️</div>
+    <div className="relative mx-auto max-w-md pt-4 text-center">
+      <FloatingBits emojis={["🧾", "🔍", "⚖️", "📂", "✨", "🖍️"]} />
+      <div className="bounce-soft mb-2 text-7xl">🕵️</div>
       <h1 className="display mb-1 text-6xl">You&apos;re on the case,</h1>
-      <h2 className="display mb-6 text-6xl text-gold-400">{state.me.name}!</h2>
+      <h2 className="display mb-4 text-6xl text-gold-400">{state.me.name}!</h2>
+
+      <div className="mb-4 min-h-6">
+        <HypeTicker lines={HYPE_LINES} />
+      </div>
 
       <div className="card rise mb-4 p-4">
-        <div className="display text-5xl text-gold-400">{state.pulse.joined}</div>
+        <div key={state.pulse.joined} className="display pop text-5xl text-gold-400">
+          {state.pulse.joined}
+        </div>
         <div className="text-xs font-bold uppercase tracking-widest text-smoke-400">
           detective{state.pulse.joined === 1 ? "" : "s"} in the room
         </div>
@@ -199,7 +219,7 @@ function LobbyScreen({ state }: { state: PlayState }) {
           <Step n={2} title="Mark it up">Highlight what matters — snipers beat sprayers.</Step>
           <Step n={3} title="Bring the receipt">Claim + exact quote + why it proves you right.</Step>
           <Step n={4} title="Jury duty">Judge two anonymous responses. Thinking, not friends.</Step>
-          <Step n={5} title="The appeal">Upgrade your answer — or defend it like a pro.</Step>
+          <Step n={5} title="The appeal">Give it a glow-up — or stand on business and defend it.</Step>
         </ol>
         <p className="mt-4 text-center font-bold text-gold-400">Random quotes don&apos;t win. Receipts do.</p>
       </div>
@@ -225,9 +245,16 @@ function ReadingScreen({ state }: { state: PlayState }) {
   if (!state.passage) return null;
   return (
     <div className="mx-auto max-w-3xl">
-      <CaseFileHeader title={state.passage.title} subtitle="Read the whole thing. You'll annotate next — notice moments that feel important." />
+      <ScrollProgress />
+      <CaseFileHeader
+        title={state.passage.title}
+        subtitle="Read the WHOLE thing — skimming is a crime in this jurisdiction. 🚔 You'll annotate next, so notice moments that feel important."
+      />
       <PassageView text={state.passage.text} />
       <VocabNotes notes={state.passage.vocabNotes} />
+      <p className="mt-4 text-center text-xs font-bold uppercase tracking-widest text-smoke-400">
+        Fill the gold bar at the top. Then you&apos;re certified. ✅
+      </p>
     </div>
   );
 }
@@ -241,8 +268,8 @@ function PromptScreen({ state }: { state: PlayState }) {
         </span>
         <p className="display mb-3 text-4xl leading-tight text-smoke-50 sm:text-5xl">{state.prompt?.text}</p>
         <p className="text-sm text-smoke-400">
-          Think before you type: which exact words in the text are your strongest receipt? Submissions open
-          when your teacher says go.
+          Think before you type. Which exact words in the text are your strongest receipt? 🤔
+          Submissions open when your teacher says go — lock in.
         </p>
       </div>
       {state.passage && <PassageView text={state.passage.text} highlights={state.annotations} />}
@@ -253,10 +280,11 @@ function PromptScreen({ state }: { state: PlayState }) {
 function CompleteScreen({ state }: { state: PlayState }) {
   return (
     <div className="mx-auto max-w-3xl">
+      <EmojiRain emojis={["🧾", "⭐", "🔍", "💯", "⚖️"]} />
       <div className="mb-8 pt-4 text-center">
         <span className="stamp pop inline-block border-8 px-6 py-2 text-6xl text-win-400">Case closed</span>
         <p className="mt-4 text-smoke-300">
-          Strong work, {state.me.name}. Your thinking is saved for your teacher.
+          W performance, {state.me.name}. 🫡 Your thinking is saved for your teacher.
         </p>
       </div>
       {state.reveal && <RevealScreen state={state} noConfetti />}
