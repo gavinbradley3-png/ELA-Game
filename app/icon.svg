@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Receipts app icon: navy tile, receipt-sheet speech bubble, quotes,
+       ruled lines, highlighter stroke, teal check -->
+  <rect width="512" height="512" rx="118" fill="#0f1d2d"/>
+
+  <!-- soft shadow under the sheet -->
+  <path d="M146 112 h236 a22 22 0 0 1 22 22 v236
+    l-14 18 l-14 -18 l-14 18 l-14 -18 l-14 18 l-14 -18 l-14 18 l-14 -18
+    l-28 72 l-28 -72
+    l-14 18 l-14 -18 l-14 18 l-14 -18 l-14 18 l-14 -18 l-14 18 l-14 -18
+    v-236 a22 22 0 0 1 22 -22 z" fill="#000000" opacity="0.3"/>
+
+  <!-- sheet: rounded top, jagged bottom with center speech tail -->
+  <path d="M138 100 h236 a22 22 0 0 1 22 22 v236
+    l-14 18 l-14 -18 l-14 18 l-14 -18 l-14 18 l-14 -18 l-14 18 l-14 -18
+    l-28 72 l-28 -72
+    l-14 18 l-14 -18 l-14 18 l-14 -18 l-14 18 l-14 -18 l-14 18 l-14 -18
+    v-236 a22 22 0 0 1 22 -22 z" fill="#fffdf6"/>
+
+  <!-- teal opening quotes (66 orientation) -->
+  <g transform="translate(158 138) scale(0.66) rotate(180 50 37)" fill="#14b8a6">
+    <path d="M8 14 A14 14 0 0 1 22 0 H32 A12 12 0 0 1 44 12 V34 C44 54 32 68 12 74 L7 63 C18 58 24 50 25 42 H20 A12 12 0 0 1 8 30 Z"/>
+    <path d="M56 14 A14 14 0 0 1 70 0 H80 A12 12 0 0 1 92 12 V34 C92 54 80 68 60 74 L55 63 C66 58 72 50 73 42 H68 A12 12 0 0 1 56 30 Z"/>
+  </g>
+
+  <!-- ruled lines -->
+  <rect x="240" y="148" width="112" height="11" rx="5.5" fill="#cdc9be"/>
+  <rect x="240" y="172" width="84"  height="11" rx="5.5" fill="#cdc9be"/>
+  <rect x="162" y="210" width="190" height="11" rx="5.5" fill="#cdc9be"/>
+
+  <!-- highlighter stroke -->
+  <rect x="160" y="238" width="194" height="30" rx="6" fill="#ffe44d" transform="rotate(-1.4 256 253)"/>
+
+  <!-- more lines -->
+  <rect x="162" y="288" width="176" height="11" rx="5.5" fill="#cdc9be"/>
+  <rect x="162" y="312" width="128" height="11" rx="5.5" fill="#cdc9be"/>
+
+  <!-- teal check -->
+  <path d="M290 314 l32 32 l56 -70" stroke="#14b8a6" stroke-width="25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
