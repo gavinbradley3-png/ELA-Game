@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
-import { PrimaryLogo } from "@/components/Logo";
+import { PrimaryLogo, DescriptorLockup } from "@/components/Logo";
 
 export default async function Home() {
   const user = await getSessionUser();
@@ -36,8 +36,8 @@ export default async function Home() {
           </p>
         )}
       </div>
-      <footer className="pb-6 text-center">
-        <span className="display text-xl text-navy-950">Show your <span className="teal-underline">proof</span>.</span>
+      <footer className="pb-8 text-center">
+        <DescriptorLockup />
       </footer>
     </main>
   );
